@@ -25,4 +25,4 @@ set -e # Exit early if any commands fail
 #
 # - Edit this to change how your program runs locally
 # - Edit .codecrafters/run.sh to change how your program runs remotely
-exec /tmp/codecrafters-interpreter-target/release/interpreter-starter-rust "$@"
+exec /tmp/codecrafters-interpreter-target/release/lox-rs "$@"
