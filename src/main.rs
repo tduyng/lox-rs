@@ -1,8 +1,10 @@
 use std::env;
 use std::fs;
+use std::process;
 
 use scanner::Scanner;
 
+mod error;
 mod scanner;
 mod token;
 
@@ -23,27 +25,26 @@ fn main() {
 
     match command.as_str() {
         "tokenize" => {
-            if !file_contents.is_empty() {
-                let mut scanner = Scanner::new(file_contents);
-                let tokens = scanner.scan_tokens();
+            let mut scanner = Scanner::new(file_contents);
+            let tokens = scanner.scan_tokens();
 
-                for token in tokens {
-                    let token_type = token.token_type.to_string();
-                    let lexeme = &token.lexeme;
+            for token in tokens {
+                let token_type = token.token_type.to_string();
+                let lexeme = &token.lexeme;
 
-                    let literal_str = match &token.literal {
-                        Some(value) => value.clone(),
-                        None => "null".to_string(),
-                    };
-                    println!("{} {} {}", token_type, lexeme, literal_str);
-                }
-            } else {
-                println!("EOF  null");
+                let literal_str = match &token.literal {
+                    Some(value) => value.clone(),
+                    None => "null".to_string(),
+                };
+                println!("{} {} {}", token_type, lexeme, literal_str);
+            }
+            if scanner.had_errors() {
+                process::exit(65);
             }
         }
         _ => {
             eprintln!("Unknown command: {}", command);
-            return;
+            process::exit(64)
         }
     }
 }

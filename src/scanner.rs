@@ -1,4 +1,7 @@
-use crate::token::{Token, TokenType};
+use crate::{
+    error::ScannerError,
+    token::{Token, TokenType},
+};
 
 pub struct Scanner {
     source: String,
@@ -6,6 +9,7 @@ pub struct Scanner {
     start: usize,
     current: usize,
     line: usize,
+    errors: Vec<ScannerError>,
 }
 
 impl Scanner {
@@ -16,6 +20,7 @@ impl Scanner {
             start: 0,
             current: 0,
             line: 1,
+            errors: Vec::new(),
         }
     }
 
@@ -35,7 +40,6 @@ impl Scanner {
         match c {
             '(' => self.add_token(TokenType::LeftParen),
             ')' => self.add_token(TokenType::RightParen),
-            '=' => self.add_token(TokenType::Equal),
             '}' => self.add_token(TokenType::RightBrace),
             '{' => self.add_token(TokenType::LeftBrace),
             '*' => self.add_token(TokenType::Star),
@@ -46,8 +50,21 @@ impl Scanner {
             ';' => self.add_token(TokenType::Semicolon),
             '"' => self.string(),
             'a'..='z' | 'A'..='Z' => self.identifier(),
+            '=' => {
+                if self.match_next('=') {
+                    self.add_token(TokenType::EqualEqual);
+                } else {
+                    self.add_token(TokenType::Equal);
+                }
+            }
             _ => {
-                // Placeholder for other cases
+                if c.is_whitespace() {
+                    if c == '\n' {
+                        self.line += 1;
+                    }
+                } else {
+                    self.report_error(ScannerError::UnexpectedCharacter(c, self.line));
+                }
             }
         }
     }
@@ -73,7 +90,7 @@ impl Scanner {
         }
 
         if self.is_at_end() {
-            println!("Error: Unterminated string");
+            self.report_error(ScannerError::UnterminatedString(self.line));
             return;
         }
 
@@ -103,11 +120,33 @@ impl Scanner {
         self.add_token(token_type);
     }
 
+    fn match_next(&mut self, expected: char) -> bool {
+        if self.is_at_end() {
+            return false;
+        }
+
+        if self.source.chars().nth(self.current) != Some(expected) {
+            return false;
+        }
+
+        self.current += 1;
+        true
+    }
+
     fn peek(&self) -> char {
         self.source.chars().nth(self.current).unwrap_or('\0')
     }
 
     fn is_at_end(&self) -> bool {
         self.current >= self.source.len()
+    }
+
+    fn report_error(&mut self, error: ScannerError) {
+        eprintln!("{}", error);
+        self.errors.push(error);
+    }
+
+    pub fn had_errors(&self) -> bool {
+        !self.errors.is_empty()
     }
 }
