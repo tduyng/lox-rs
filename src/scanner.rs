@@ -49,7 +49,6 @@ impl Scanner {
             '-' => self.add_token(TokenType::Minus),
             ';' => self.add_token(TokenType::Semicolon),
             '"' => self.string(),
-            'a'..='z' | 'A'..='Z' => self.identifier(),
             '=' => {
                 if self.match_next('=') {
                     self.add_token(TokenType::EqualEqual);
@@ -57,6 +56,45 @@ impl Scanner {
                     self.add_token(TokenType::Equal);
                 }
             }
+            '!' => {
+                if self.match_next('=') {
+                    self.add_token(TokenType::BangEqual);
+                } else {
+                    self.add_token(TokenType::Bang);
+                }
+            }
+            '<' => {
+                if self.match_next('=') {
+                    self.add_token(TokenType::LessEqual);
+                } else {
+                    self.add_token(TokenType::Less);
+                }
+            }
+            '>' => {
+                if self.match_next('=') {
+                    self.add_token(TokenType::GreaterEqual);
+                } else {
+                    self.add_token(TokenType::Greater);
+                }
+            }
+            '/' => {
+                if self.match_next('/') {
+                    // It's a comment, ignore it by consuming characters till end of line
+                    while self.peek() != '\n' && !self.is_at_end() {
+                        self.advance();
+                    }
+                } else {
+                    self.add_token(TokenType::Slash);
+                }
+            }
+            ' ' | '\r' | '\t' => {
+                // Ignore whitespace (spaces, tabs, and carriage returns)
+            }
+            '\n' => {
+                // Handle new lines (increment line counter but don't add a token)
+                self.line += 1;
+            }
+            'a'..='z' | 'A'..='Z' => self.identifier(),
             _ => {
                 if c.is_whitespace() {
                     if c == '\n' {
