@@ -94,6 +94,7 @@ impl Scanner {
                 // Handle new lines (increment line counter but don't add a token)
                 self.line += 1;
             }
+            '0'..='9' => self.number(),
             'a'..='z' | 'A'..='Z' => self.identifier(),
             _ => {
                 if c.is_whitespace() {
@@ -142,6 +143,39 @@ impl Scanner {
         ));
     }
 
+    fn number(&mut self) {
+        while self.peek().is_digit(10) {
+            self.advance();
+        }
+
+        if self.peek() == '.' && self.peek_next().is_digit(10) {
+            self.advance();
+
+            while self.peek().is_digit(10) {
+                self.advance();
+            }
+        }
+
+        let lexeme = self.source[self.start..self.current].to_string();
+        let value = lexeme.parse::<f64>().unwrap();
+
+        let formatted_value = if value.fract() == 0.0 {
+            format!("{:.1}", value)
+        } else {
+            format!("{:.*}", 6, value)
+                .trim_end_matches('0')
+                .trim_end_matches('.')
+                .to_string()
+        };
+
+        self.tokens.push(Token::new(
+            TokenType::Number,
+            lexeme,
+            Some(formatted_value),
+            self.line,
+        ));
+    }
+
     fn identifier(&mut self) {
         while self.peek().is_alphanumeric() {
             self.advance();
@@ -173,6 +207,14 @@ impl Scanner {
 
     fn peek(&self) -> char {
         self.source.chars().nth(self.current).unwrap_or('\0')
+    }
+
+    fn peek_next(&self) -> char {
+        if self.current + 1 >= self.source.len() {
+            '\0' // Return null character if out of bounds
+        } else {
+            self.source.chars().nth(self.current + 1).unwrap()
+        }
     }
 
     fn is_at_end(&self) -> bool {

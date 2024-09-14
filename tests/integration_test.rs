@@ -65,3 +65,17 @@ fn test_string_handling() {
     let expected_output = "STRING \"foo baz\" foo baz\nEOF  null";
     assert_eq!(stdout.trim(), expected_output);
 }
+
+#[test]
+fn test_number_handling() {
+    let output = Command::new("./target/debug/lox-rs")
+        .arg("tokenize")
+        .arg("tests/lox_files/number.lox")
+        .output()
+        .expect("Failed to execute process");
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let expected_output =
+        "NUMBER 42 42.0\nNUMBER 1234.1234 1234.1234\nNUMBER 48.0000 48.0\nEOF  null";
+    assert_eq!(stdout.trim(), expected_output);
+}
