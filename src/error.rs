@@ -20,3 +20,16 @@ impl fmt::Display for ScannerError {
 }
 
 impl std::error::Error for ScannerError {}
+
+#[derive(Debug)]
+pub struct ExitCode(i32);
+
+impl ExitCode {
+    pub fn new(code: i32) -> Self {
+        ExitCode(code)
+    }
+
+    pub fn code(&self) -> i32 {
+        self.0
+    }
+}

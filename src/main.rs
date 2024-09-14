@@ -2,9 +2,10 @@ use std::env;
 use std::fs;
 use std::process;
 
-use scanner::Scanner;
-use token::TokenType;
+use command::tokenize::TokenizeCommand;
+use command::Command;
 
+mod command;
 mod error;
 mod scanner;
 mod token;
@@ -16,7 +17,7 @@ fn main() {
         return;
     }
 
-    let command = &args[1];
+    let command_name = &args[1];
     let filename = &args[2];
 
     let file_contents = fs::read_to_string(filename).unwrap_or_else(|_| {
@@ -24,32 +25,14 @@ fn main() {
         String::new()
     });
 
-    match command.as_str() {
-        "tokenize" => {
-            let mut scanner = Scanner::new(file_contents);
-            let tokens = scanner.scan_tokens();
-
-            for token in tokens {
-                let token_type = token.token_type.to_string();
-                let lexeme = if token.token_type == TokenType::String {
-                    format!("\"{}\"", token.lexeme)
-                } else {
-                    token.lexeme.clone()
-                };
-
-                let literal_str = match &token.literal {
-                    Some(value) => value.clone(),
-                    None => "null".to_string(),
-                };
-                println!("{} {} {}", token_type, lexeme, literal_str);
-            }
-            if scanner.had_errors() {
-                process::exit(65);
-            }
-        }
+    let command: Box<dyn Command> = match command_name.as_str() {
+        "tokenize" => Box::new(TokenizeCommand::new(file_contents)),
         _ => {
-            eprintln!("Unknown command: {}", command);
-            process::exit(64)
+            eprintln!("Unknown command: {}", command_name);
+            process::exit(64);
         }
-    }
+    };
+
+    let exit_code = command.execute();
+    process::exit(exit_code.code());
 }
