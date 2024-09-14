@@ -79,3 +79,17 @@ fn test_number_handling() {
         "NUMBER 42 42.0\nNUMBER 1234.1234 1234.1234\nNUMBER 48.0000 48.0\nEOF  null";
     assert_eq!(stdout.trim(), expected_output);
 }
+
+#[test]
+fn test_identifier_handling() {
+    let output = Command::new("./target/debug/lox-rs")
+        .arg("tokenize")
+        .arg("tests/lox_files/identifier.lox")
+        .output()
+        .expect("Failed to execute process");
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let expected_output =
+        "IDENTIFIER foo null\nIDENTIFIER bar null\nIDENTIFIER _hello null\nIDENTIFIER _123_hello null\nNUMBER 6 6.0\nIDENTIFIER az null\nNUMBER 6 6.0\nIDENTIFIER ar null\nIDENTIFIER f00 null\nIDENTIFIER fo null\nAND and null\nLEFT_PAREN ( null\nRIGHT_PAREN ) null\nLESS < null\nGREATER > null\nLESS < null\nGREATER > null\nEOF  null";
+    assert_eq!(stdout.trim(), expected_output);
+}

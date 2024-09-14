@@ -87,15 +87,14 @@ impl Scanner {
                     self.add_token(TokenType::Slash);
                 }
             }
-            ' ' | '\r' | '\t' => {
+            c if c.is_alphabetic() || c == '_' => self.identifier(),
+            c if c.is_digit(10) => self.number(),
+            c if c.is_whitespace() => {
                 // Ignore whitespace (spaces, tabs, and carriage returns)
             }
             '\n' => {
-                // Handle new lines (increment line counter but don't add a token)
                 self.line += 1;
             }
-            '0'..='9' => self.number(),
-            'a'..='z' | 'A'..='Z' => self.identifier(),
             _ => {
                 if c.is_whitespace() {
                     if c == '\n' {
@@ -109,8 +108,11 @@ impl Scanner {
     }
 
     fn advance(&mut self) -> char {
-        let c = self.source.chars().nth(self.current).unwrap_or('\0');
-        self.current += 1;
+        let c = self.source[self.current..].chars().next().unwrap();
+        self.current += c.len_utf8();
+        if c == '\n' {
+            self.line += 1;
+        }
         c
     }
 
@@ -177,19 +179,32 @@ impl Scanner {
     }
 
     fn identifier(&mut self) {
-        while self.peek().is_alphanumeric() {
+        while self.peek().is_alphanumeric() || self.peek() == '_' {
             self.advance();
         }
 
-        let text = &self.source[self.start..self.current];
-        let token_type = match text {
-            "var" => TokenType::Var,
+        let lexeme = self.source[self.start..self.current].to_string();
+        let token_type = match lexeme.as_str() {
             "and" => TokenType::And,
             "class" => TokenType::Class,
+            "else" => TokenType::Else,
+            "false" => TokenType::False,
+            "for" => TokenType::For,
+            "fun" => TokenType::Fun,
+            "if" => TokenType::If,
+            "nil" => TokenType::Nil,
+            "or" => TokenType::Or,
+            "print" => TokenType::Print,
+            "return" => TokenType::Return,
+            "super" => TokenType::Super,
+            "this" => TokenType::This,
+            "true" => TokenType::True,
+            "var" => TokenType::Var,
+            "while" => TokenType::While,
             _ => TokenType::Identifier,
         };
-
-        self.add_token(token_type);
+        self.tokens
+            .push(Token::new(token_type, lexeme, None, self.line));
     }
 
     fn match_next(&mut self, expected: char) -> bool {
