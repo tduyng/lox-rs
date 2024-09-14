@@ -24,6 +24,7 @@ impl std::error::Error for ScannerError {}
 #[derive(Debug)]
 pub struct ExitCode(i32);
 
+#[allow(unused)]
 impl ExitCode {
     pub fn new(code: i32) -> Self {
         ExitCode(code)

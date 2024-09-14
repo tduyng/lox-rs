@@ -88,7 +88,7 @@ impl Scanner {
                 }
             }
             c if c.is_alphabetic() || c == '_' => self.identifier(),
-            c if c.is_digit(10) => self.number(),
+            c if c.is_ascii_digit() => self.number(),
             c if c.is_whitespace() => {
                 // Ignore whitespace (spaces, tabs, and carriage returns)
             }
@@ -146,14 +146,14 @@ impl Scanner {
     }
 
     fn number(&mut self) {
-        while self.peek().is_digit(10) {
+        while self.peek().is_ascii_digit() {
             self.advance();
         }
 
-        if self.peek() == '.' && self.peek_next().is_digit(10) {
+        if self.peek() == '.' && self.peek_next().is_ascii_digit() {
             self.advance();
 
-            while self.peek().is_digit(10) {
+            while self.peek().is_ascii_digit() {
                 self.advance();
             }
         }
