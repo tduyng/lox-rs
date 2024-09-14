@@ -4,7 +4,7 @@ use std::process::Command;
 fn test_empty_file_tokenize() {
     let output = Command::new("./target/debug/lox-rs")
         .arg("tokenize")
-        .arg("tests/lox_files/empty.lox")
+        .arg("tests/scanning/lox_files/empty.lox")
         .output()
         .expect("Failed to execute process");
 
@@ -16,7 +16,7 @@ fn test_empty_file_tokenize() {
 fn test_var_declaration_tokenize() {
     let output = Command::new("./target/debug/lox-rs")
         .arg("tokenize")
-        .arg("tests/lox_files/var_declaration.lox")
+        .arg("tests/scanning/lox_files/var_declaration.lox")
         .output()
         .expect("Failed to execute process");
 
@@ -29,7 +29,7 @@ fn test_var_declaration_tokenize() {
 fn test_error_unknown_keyword() {
     let output = Command::new("./target/debug/lox-rs")
         .arg("tokenize")
-        .arg("tests/lox_files/error.lox")
+        .arg("tests/scanning/lox_files/error.lox")
         .output()
         .expect("Failed to execute process");
 
@@ -43,7 +43,7 @@ fn test_error_unknown_keyword() {
 fn test_double_characters() {
     let output = Command::new("./target/debug/lox-rs")
         .arg("tokenize")
-        .arg("tests/lox_files/double_characters.lox")
+        .arg("tests/scanning/lox_files/double_characters.lox")
         .output()
         .expect("Failed to execute process");
 
@@ -57,7 +57,7 @@ fn test_double_characters() {
 fn test_string_handling() {
     let output = Command::new("./target/debug/lox-rs")
         .arg("tokenize")
-        .arg("tests/lox_files/string.lox")
+        .arg("tests/scanning/lox_files/string.lox")
         .output()
         .expect("Failed to execute process");
 
@@ -70,7 +70,7 @@ fn test_string_handling() {
 fn test_number_handling() {
     let output = Command::new("./target/debug/lox-rs")
         .arg("tokenize")
-        .arg("tests/lox_files/number.lox")
+        .arg("tests/scanning/lox_files/number.lox")
         .output()
         .expect("Failed to execute process");
 
@@ -84,7 +84,7 @@ fn test_number_handling() {
 fn test_identifier_handling() {
     let output = Command::new("./target/debug/lox-rs")
         .arg("tokenize")
-        .arg("tests/lox_files/identifier.lox")
+        .arg("tests/scanning/lox_files/identifier.lox")
         .output()
         .expect("Failed to execute process");
 
