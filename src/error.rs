@@ -13,7 +13,7 @@ impl fmt::Display for ScannerError {
                 write!(f, "[line {}] Error: Unexpected character: {}", line, c)
             }
             ScannerError::UnterminatedString(line) => {
-                write!(f, "[line {}] Error: Unterminated string", line)
+                write!(f, "[line {}] Error: Unterminated string.", line)
             }
         }
     }

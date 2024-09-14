@@ -3,6 +3,7 @@ use std::fs;
 use std::process;
 
 use scanner::Scanner;
+use token::TokenType;
 
 mod error;
 mod scanner;
@@ -30,7 +31,11 @@ fn main() {
 
             for token in tokens {
                 let token_type = token.token_type.to_string();
-                let lexeme = &token.lexeme;
+                let lexeme = if token.token_type == TokenType::String {
+                    format!("\"{}\"", token.lexeme)
+                } else {
+                    token.lexeme.clone()
+                };
 
                 let literal_str = match &token.literal {
                     Some(value) => value.clone(),
