@@ -3,9 +3,11 @@ use std::fs;
 use std::process;
 
 use command::evaluate::EvaluateCommand;
+use command::parse::ParseCommand;
 use command::tokenize::TokenizeCommand;
 use command::Command;
 
+mod ast;
 mod command;
 mod error;
 mod interpreter;
@@ -31,6 +33,7 @@ fn main() {
     let command: Box<dyn Command> = match command_name.as_str() {
         "tokenize" => Box::new(TokenizeCommand::new(file_contents)),
         "evaluate" => Box::new(EvaluateCommand::new(file_contents)),
+        "parse" => Box::new(ParseCommand::new(file_contents)),
         _ => {
             eprintln!("Unknown command: {}", command_name);
             process::exit(64);

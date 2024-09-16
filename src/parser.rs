@@ -1,6 +1,5 @@
-use std::fmt;
-
 use crate::{
+    ast::Expr,
     error::ScannerError,
     token::{Token, TokenType},
 };
@@ -112,9 +111,13 @@ impl Parser {
         }
 
         let token = self.advance();
+
+        let lexeme = token.lexeme.clone();
+        let line = token.line;
+
         match token.token_type {
-            TokenType::String => Expr::String(token.lexeme.clone()),
-            TokenType::Number => Expr::Number(token.lexeme.parse().unwrap_or(0.0)),
+            TokenType::String => Expr::String(lexeme),
+            TokenType::Number => Expr::Number(lexeme.parse().unwrap_or(0.0)),
             TokenType::True => Expr::Boolean(true),
             TokenType::False => Expr::Boolean(false),
             TokenType::Nil => Expr::Nil,
@@ -124,7 +127,7 @@ impl Parser {
                 expr
             }
             _ => {
-                self.report_error(ScannerError::UnexpectedCharacter(' ', 1));
+                self.report_error(&format!("Unexpected token: '{}'", lexeme), line);
                 Expr::Nil
             }
         }
@@ -145,9 +148,8 @@ impl Parser {
         !self.errors.is_empty()
     }
 
-    fn report_error(&mut self, error: ScannerError) {
-        eprintln!("{}", error);
-        self.errors.push(error);
+    fn report_error(&self, message: &str, line: usize) {
+        eprintln!("Error on line {}: {}", line, message);
     }
 
     fn peek(&self) -> &Token {
@@ -156,7 +158,14 @@ impl Parser {
 
     fn consume(&mut self, expected: TokenType) {
         if self.is_at_end() || self.peek().token_type != expected {
-            self.report_error(ScannerError::UnexpectedCharacter(' ', self.current));
+            let current_token = self.peek();
+            self.report_error(
+                &format!(
+                    "Expected {:?}, but got {:?} on line {}.",
+                    expected, current_token.token_type, current_token.line
+                ),
+                current_token.line,
+            );
         } else {
             self.advance();
         }
@@ -182,39 +191,5 @@ impl Parser {
 
     fn previous(&self) -> &Token {
         &self.tokens[self.current - 1]
-    }
-}
-
-#[derive(PartialEq)]
-pub enum Expr {
-    String(String),
-    Number(f64),
-    Boolean(bool),
-    Nil,
-    Unary {
-        operator: Token,
-        right: Box<Expr>,
-    },
-    Binary {
-        left: Box<Expr>,
-        operator: Token,
-        right: Box<Expr>,
-    },
-}
-
-impl fmt::Display for Expr {
-    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            Expr::String(s) => write!(fmt, "{}", s),
-            Expr::Number(n) => write!(fmt, "{}", n),
-            Expr::Boolean(b) => write!(fmt, "{}", b),
-            Expr::Nil => write!(fmt, "nil"),
-            Expr::Unary { operator, right } => write!(fmt, "({} {})", operator.lexeme, right),
-            Expr::Binary {
-                left,
-                operator,
-                right,
-            } => write!(fmt, "({} {} {})", operator.lexeme, left, right),
-        }
     }
 }
