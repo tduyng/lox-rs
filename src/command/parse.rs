@@ -34,9 +34,13 @@ impl Command for ParseCommand {
             }
             Expr::Boolean(b) => println!("{}", b),
             Expr::Nil => println!("nil"),
-            Expr::Unary { operator, right } => {
-                println!("({} {})", operator.lexeme, right);
-            }
+            Expr::Unary { operator, right } => match **right {
+                Expr::Number(n) => {
+                    let formatted_number = format_parsed_number(n);
+                    println!("({} {})", operator.lexeme, formatted_number);
+                }
+                _ => println!("({} {})", operator.lexeme, right),
+            },
             Expr::Binary {
                 left,
                 operator,
@@ -44,6 +48,13 @@ impl Command for ParseCommand {
             } => {
                 println!("({} {} {})", operator.lexeme, left, right);
             }
+            Expr::Grouping(expr) => match **expr {
+                Expr::Number(n) => {
+                    let formatted_number = format_parsed_number(n);
+                    println!("(group {})", formatted_number);
+                }
+                _ => println!("(group {})", expr),
+            },
         }
 
         process::exit(0)

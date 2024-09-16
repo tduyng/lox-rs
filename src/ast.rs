@@ -17,6 +17,7 @@ pub enum Expr {
         operator: Token,
         right: Box<Expr>,
     },
+    Grouping(Box<Expr>),
 }
 
 impl fmt::Display for Expr {
@@ -32,6 +33,13 @@ impl fmt::Display for Expr {
                 operator,
                 right,
             } => write!(fmt, "({} {} {})", operator.lexeme, left, right),
+            Expr::Grouping(expr) => match **expr {
+                Expr::Number(n) => {
+                    let formatted_number = format_evaluated_number(n);
+                    write!(fmt, "(group {})", formatted_number)
+                }
+                _ => write!(fmt, "(group {})", expr),
+            },
         }
     }
 }

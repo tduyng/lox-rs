@@ -124,7 +124,7 @@ impl Parser {
             TokenType::LeftParen => {
                 let expr = self.expression();
                 self.consume(TokenType::RightParen);
-                expr
+                Expr::Grouping(Box::new(expr))
             }
             _ => {
                 self.report_error(&format!("Unexpected token: '{}'", lexeme), line);

@@ -44,6 +44,7 @@ impl Interpreter {
                 let line = operator.line;
                 self.handle_binary_op(left_val, &operator.token_type, right_val, line)
             }
+            Expr::Grouping(inner_expr) => self.evaluate(*inner_expr),
         }
     }
 

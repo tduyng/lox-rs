@@ -1,12 +1,13 @@
 const MAX_DECIMALS: usize = 6;
 
-pub fn format_evaluated_number(n: f64) -> String {
+fn format_number(n: f64) -> String {
     let rounded_number =
         (n * 10_f64.powi(MAX_DECIMALS as i32)).round() / 10_f64.powi(MAX_DECIMALS as i32);
 
     let mut formatted = format!("{:.*}", MAX_DECIMALS, rounded_number);
 
     formatted = formatted.trim_end_matches('0').to_string();
+
     if formatted.ends_with('.') {
         formatted.pop();
     }
@@ -14,18 +15,14 @@ pub fn format_evaluated_number(n: f64) -> String {
     formatted
 }
 
+pub fn format_evaluated_number(n: f64) -> String {
+    format_number(n)
+}
+
 pub fn format_parsed_number(n: f64) -> String {
-    let rounded_number =
-        (n * 10_f64.powi(MAX_DECIMALS as i32)).round() / 10_f64.powi(MAX_DECIMALS as i32);
+    let mut formatted = format_number(n);
 
-    let mut formatted = format!("{:.*}", MAX_DECIMALS, rounded_number);
-
-    formatted = formatted.trim_end_matches('0').to_string();
-    if formatted.ends_with('.') {
-        formatted.pop();
-    }
-
-    if rounded_number.fract() == 0.0 && !formatted.contains('.') {
+    if n.fract() == 0.0 && !formatted.contains('.') {
         formatted.push_str(".0");
     }
 
