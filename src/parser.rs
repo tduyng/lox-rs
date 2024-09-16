@@ -1,3 +1,5 @@
+use std::fmt;
+
 use crate::{
     error::ScannerError,
     token::{Token, TokenType},
@@ -23,7 +25,23 @@ impl Parser {
     }
 
     fn expression(&mut self) -> Expr {
-        self.relational()
+        self.equality()
+    }
+
+    fn equality(&mut self) -> Expr {
+        let mut expr = self.relational();
+
+        while self.match_token(&[TokenType::EqualEqual, TokenType::BangEqual]) {
+            let operator = self.previous().clone();
+            let right = self.relational();
+            expr = Expr::Binary {
+                left: Box::new(expr),
+                operator,
+                right: Box::new(right),
+            };
+        }
+
+        expr
     }
 
     fn relational(&mut self) -> Expr {
@@ -167,6 +185,7 @@ impl Parser {
     }
 }
 
+#[derive(PartialEq)]
 pub enum Expr {
     String(String),
     Number(f64),
@@ -181,4 +200,21 @@ pub enum Expr {
         operator: Token,
         right: Box<Expr>,
     },
+}
+
+impl fmt::Display for Expr {
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Expr::String(s) => write!(fmt, "{}", s),
+            Expr::Number(n) => write!(fmt, "{}", n),
+            Expr::Boolean(b) => write!(fmt, "{}", b),
+            Expr::Nil => write!(fmt, "nil"),
+            Expr::Unary { operator, right } => write!(fmt, "({} {})", operator.lexeme, right),
+            Expr::Binary {
+                left,
+                operator,
+                right,
+            } => write!(fmt, "({} {} {})", operator.lexeme, left, right),
+        }
+    }
 }

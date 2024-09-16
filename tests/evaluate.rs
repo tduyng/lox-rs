@@ -71,3 +71,15 @@ fn test_evaluate_relation_operator() {
     let stdout = String::from_utf8_lossy(&output.stdout);
     assert_eq!(stdout.trim(), "true");
 }
+
+#[test]
+fn test_evaluate_equality() {
+    let output = Command::new("./target/debug/lox-rs")
+        .arg("evaluate")
+        .arg("tests/evaluate/lox_files/equality.lox")
+        .output()
+        .expect("Failed to execute process");
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert_eq!(stdout.trim(), "false");
+}
