@@ -158,22 +158,12 @@ impl Scanner {
             }
         }
 
-        let lexeme = self.source[self.start..self.current].to_string();
-        let value = lexeme.parse::<f64>().unwrap();
-
-        let formatted_value = if value.fract() == 0.0 {
-            format!("{:.1}", value)
-        } else {
-            format!("{:.*}", 6, value)
-                .trim_end_matches('0')
-                .trim_end_matches('.')
-                .to_string()
-        };
+        let value = self.source[self.start..self.current].to_string();
 
         self.tokens.push(Token::new(
             TokenType::Number,
-            lexeme,
-            Some(formatted_value),
+            value.clone(),
+            Some(value),
             self.line,
         ));
     }

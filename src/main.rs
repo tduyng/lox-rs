@@ -14,6 +14,7 @@ mod interpreter;
 mod parser;
 mod scanner;
 mod token;
+mod utils;
 
 fn main() {
     let args: Vec<String> = env::args().collect();

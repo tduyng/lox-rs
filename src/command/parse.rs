@@ -1,5 +1,7 @@
 use super::Command;
-use crate::{error::ExitCode, parser::Parser, scanner::Scanner};
+use crate::{
+    ast::Expr, error::ExitCode, parser::Parser, scanner::Scanner, utils::format_parsed_number,
+};
 use std::process;
 
 pub struct ParseCommand {
@@ -24,7 +26,26 @@ impl Command for ParseCommand {
             process::exit(65);
         }
 
-        println!("{}", expression);
+        match &expression {
+            Expr::String(s) => println!("{}", s),
+            Expr::Number(n) => {
+                let formatted_number = format_parsed_number(*n);
+                println!("{}", formatted_number);
+            }
+            Expr::Boolean(b) => println!("{}", b),
+            Expr::Nil => println!("nil"),
+            Expr::Unary { operator, right } => {
+                println!("({} {})", operator.lexeme, right);
+            }
+            Expr::Binary {
+                left,
+                operator,
+                right,
+            } => {
+                println!("({} {} {})", operator.lexeme, left, right);
+            }
+        }
+
         process::exit(0)
     }
 }

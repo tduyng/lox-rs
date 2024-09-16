@@ -65,7 +65,7 @@ impl Interpreter {
 
     fn handle_plus(&self, left: Expr, right: Expr, line: usize) -> Expr {
         match (left, right) {
-            (Expr::Number(l), Expr::Number(r)) => Expr::Number(round(l + r, 2)),
+            (Expr::Number(l), Expr::Number(r)) => Expr::Number(l + r),
             (Expr::String(l), Expr::String(r)) => Expr::String(format!("{}{}", l, r)),
             _ => {
                 eprintln!(
@@ -79,7 +79,7 @@ impl Interpreter {
 
     fn handle_minus(&self, left: Expr, right: Expr, line: usize) -> Expr {
         if let (Expr::Number(l), Expr::Number(r)) = (left, right) {
-            Expr::Number(round(l - r, 2))
+            Expr::Number(l - r)
         } else {
             eprintln!("Operands must be numbers.\n[line {}]", line);
             std::process::exit(70);
@@ -92,7 +92,7 @@ impl Interpreter {
                 eprintln!("Division by zero.\n[line {}]", line);
                 std::process::exit(70);
             }
-            Expr::Number(round(l / r, 2))
+            Expr::Number(l / r)
         } else {
             eprintln!("Operands must be numbers.\n[line {}]", line);
             std::process::exit(70);
@@ -101,7 +101,7 @@ impl Interpreter {
 
     fn handle_multiply(&self, left: Expr, right: Expr, line: usize) -> Expr {
         if let (Expr::Number(l), Expr::Number(r)) = (left, right) {
-            Expr::Number(round(l * r, 2))
+            Expr::Number(l * r)
         } else {
             eprintln!("Operands must be numbers.\n[line {}]", line);
             std::process::exit(70);
@@ -159,9 +159,4 @@ impl Interpreter {
             _ => true,
         }
     }
-}
-
-fn round(value: f64, precision: usize) -> f64 {
-    let multiplier = 10_f64.powi(precision as i32);
-    (value * multiplier).round() / multiplier
 }

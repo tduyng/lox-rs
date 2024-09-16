@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::token::Token;
+use crate::{token::Token, utils::format_evaluated_number};
 
 #[derive(PartialEq)]
 pub enum Expr {
@@ -23,7 +23,7 @@ impl fmt::Display for Expr {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Expr::String(s) => write!(fmt, "{}", s),
-            Expr::Number(n) => write!(fmt, "{}", n),
+            Expr::Number(n) => write!(fmt, "{}", format_evaluated_number(*n)),
             Expr::Boolean(b) => write!(fmt, "{}", b),
             Expr::Nil => write!(fmt, "nil"),
             Expr::Unary { operator, right } => write!(fmt, "({} {})", operator.lexeme, right),
