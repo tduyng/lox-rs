@@ -23,7 +23,39 @@ impl Parser {
     }
 
     fn expression(&mut self) -> Expr {
-        self.unary()
+        self.addition()
+    }
+
+    fn addition(&mut self) -> Expr {
+        let mut expr = self.multiplication();
+
+        while self.match_token(&[TokenType::Plus, TokenType::Minus]) {
+            let operator = self.previous().clone();
+            let right = self.multiplication();
+            expr = Expr::Binary {
+                left: Box::new(expr),
+                operator,
+                right: Box::new(right),
+            };
+        }
+
+        expr
+    }
+
+    fn multiplication(&mut self) -> Expr {
+        let mut expr = self.unary();
+
+        while self.match_token(&[TokenType::Star, TokenType::Slash]) {
+            let operator = self.previous().clone();
+            let right = self.unary();
+            expr = Expr::Binary {
+                left: Box::new(expr),
+                operator,
+                right: Box::new(right),
+            };
+        }
+
+        expr
     }
 
     fn unary(&mut self) -> Expr {
@@ -93,7 +125,7 @@ impl Parser {
 
     fn match_token(&mut self, types: &[TokenType]) -> bool {
         for token_type in types {
-            if self.check(&token_type) {
+            if self.check(token_type) {
                 self.advance();
                 return true;
             }
@@ -119,5 +151,13 @@ pub enum Expr {
     Number(f64),
     Boolean(bool),
     Nil,
-    Unary { operator: Token, right: Box<Expr> },
+    Unary {
+        operator: Token,
+        right: Box<Expr>,
+    },
+    Binary {
+        left: Box<Expr>,
+        operator: Token,
+        right: Box<Expr>,
+    },
 }
