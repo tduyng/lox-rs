@@ -19,26 +19,43 @@ impl Parser {
     }
 
     pub fn parse(&mut self) -> Expr {
-        if !self.is_at_end() {
-            let token = self.advance();
-            match token.token_type {
-                TokenType::String => Expr::String(token.lexeme.clone()),
-                TokenType::Number => Expr::Number(token.lexeme.parse().unwrap_or(0.0)),
-                TokenType::True => Expr::Boolean(true),
-                TokenType::False => Expr::Boolean(false),
-                TokenType::Nil => Expr::Nil,
-                TokenType::LeftParen => {
-                    let expr = self.parse();
-                    self.consume(TokenType::RightParen);
-                    expr
-                }
-                _ => {
-                    self.report_error(ScannerError::UnexpectedCharacter(' ', 1));
-                    Expr::Nil
-                }
+        self.expression()
+    }
+
+    fn expression(&mut self) -> Expr {
+        self.unary()
+    }
+
+    fn unary(&mut self) -> Expr {
+        if self.match_token(&[TokenType::Bang, TokenType::Minus]) {
+            let operator = self.previous().clone();
+            let right = Box::new(self.unary());
+            return Expr::Unary { operator, right };
+        }
+        self.primary()
+    }
+
+    fn primary(&mut self) -> Expr {
+        if self.is_at_end() {
+            return Expr::Nil;
+        }
+
+        let token = self.advance();
+        match token.token_type {
+            TokenType::String => Expr::String(token.lexeme.clone()),
+            TokenType::Number => Expr::Number(token.lexeme.parse().unwrap_or(0.0)),
+            TokenType::True => Expr::Boolean(true),
+            TokenType::False => Expr::Boolean(false),
+            TokenType::Nil => Expr::Nil,
+            TokenType::LeftParen => {
+                let expr = self.expression();
+                self.consume(TokenType::RightParen);
+                expr
             }
-        } else {
-            Expr::Nil
+            _ => {
+                self.report_error(ScannerError::UnexpectedCharacter(' ', 1));
+                Expr::Nil
+            }
         }
     }
 
@@ -73,6 +90,28 @@ impl Parser {
             self.advance();
         }
     }
+
+    fn match_token(&mut self, types: &[TokenType]) -> bool {
+        for token_type in types {
+            if self.check(&token_type) {
+                self.advance();
+                return true;
+            }
+        }
+        false
+    }
+
+    fn check(&self, token_type: &TokenType) -> bool {
+        if self.is_at_end() {
+            false
+        } else {
+            self.peek().token_type == *token_type
+        }
+    }
+
+    fn previous(&self) -> &Token {
+        &self.tokens[self.current - 1]
+    }
 }
 
 pub enum Expr {
@@ -80,4 +119,5 @@ pub enum Expr {
     Number(f64),
     Boolean(bool),
     Nil,
+    Unary { operator: Token, right: Box<Expr> },
 }
