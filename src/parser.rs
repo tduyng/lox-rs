@@ -23,7 +23,28 @@ impl Parser {
     }
 
     fn expression(&mut self) -> Expr {
-        self.addition()
+        self.relational()
+    }
+
+    fn relational(&mut self) -> Expr {
+        let mut expr = self.addition();
+
+        while self.match_token(&[
+            TokenType::Greater,
+            TokenType::GreaterEqual,
+            TokenType::Less,
+            TokenType::LessEqual,
+        ]) {
+            let operator = self.previous().clone();
+            let right = self.addition(); // Changed from multiplication to addition
+            expr = Expr::Binary {
+                left: Box::new(expr),
+                operator,
+                right: Box::new(right),
+            };
+        }
+
+        expr
     }
 
     fn addition(&mut self) -> Expr {
