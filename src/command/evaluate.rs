@@ -21,7 +21,14 @@ impl Command for EvaluateCommand {
         let mut scanner = Scanner::new(self.file_contents.clone());
         let tokens = scanner.scan_tokens();
         let mut parser = Parser::new(tokens.to_vec());
-        let expression = parser.parse();
+        let expression = match parser.parse() {
+            Ok(expr) => expr,
+            Err(e) => {
+                eprintln!("Parsing error: {}", e);
+                process::exit(65);
+            }
+        };
+
         if parser.had_errors() {
             eprintln!("Parsing errors encountered.");
             process::exit(65);

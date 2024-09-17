@@ -17,15 +17,16 @@ impl Command for ParseCommand {
         let mut scanner = Scanner::new(self.file_contents.clone());
         let tokens = scanner.scan_tokens();
         let mut parser = Parser::new(tokens.to_vec());
-        let expression = parser.parse();
 
-        if parser.had_errors() {
-            eprintln!("Parsing errors encountered.");
-            process::exit(65);
+        match parser.parse() {
+            Ok(expression) => {
+                println!("{}", expression);
+                process::exit(0)
+            }
+            Err(e) => {
+                eprintln!("{}", e);
+                process::exit(65)
+            }
         }
-
-        println!("{}", expression);
-
-        process::exit(0)
     }
 }

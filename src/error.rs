@@ -1,25 +1,27 @@
 use std::fmt;
 
 #[derive(Debug)]
-pub enum ScannerError {
-    UnexpectedCharacter(char, usize),
-    UnterminatedString(usize),
+pub struct LoxError {
+    message: String,
+    line: usize,
 }
 
-impl fmt::Display for ScannerError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            ScannerError::UnexpectedCharacter(c, line) => {
-                write!(f, "[line {}] Error: Unexpected character: {}", line, c)
-            }
-            ScannerError::UnterminatedString(line) => {
-                write!(f, "[line {}] Error: Unterminated string.", line)
-            }
+impl LoxError {
+    pub fn new(message: &str, line: usize) -> Self {
+        LoxError {
+            message: message.to_string(),
+            line,
         }
     }
 }
 
-impl std::error::Error for ScannerError {}
+impl fmt::Display for LoxError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "[line {}] Error: {}", self.line, self.message)
+    }
+}
+
+impl std::error::Error for LoxError {}
 
 #[derive(Debug)]
 pub struct ExitCode(i32);

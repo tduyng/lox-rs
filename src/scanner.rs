@@ -1,5 +1,5 @@
 use crate::{
-    error::ScannerError,
+    error::LoxError,
     token::{Token, TokenType},
 };
 
@@ -9,7 +9,7 @@ pub struct Scanner {
     start: usize,
     current: usize,
     line: usize,
-    errors: Vec<ScannerError>,
+    errors: Vec<LoxError>,
 }
 
 impl Scanner {
@@ -101,7 +101,10 @@ impl Scanner {
                         self.line += 1;
                     }
                 } else {
-                    self.report_error(ScannerError::UnexpectedCharacter(c, self.line));
+                    self.report_error(LoxError::new(
+                        &format!("Unexpected character: {}", c),
+                        self.line,
+                    ));
                 }
             }
         }
@@ -131,7 +134,7 @@ impl Scanner {
         }
 
         if self.is_at_end() {
-            self.report_error(ScannerError::UnterminatedString(self.line));
+            self.report_error(LoxError::new("Unterminated string.", self.line));
             return;
         }
 
@@ -226,7 +229,7 @@ impl Scanner {
         self.current >= self.source.len()
     }
 
-    fn report_error(&mut self, error: ScannerError) {
+    fn report_error(&mut self, error: LoxError) {
         eprintln!("{}", error);
         self.errors.push(error);
     }

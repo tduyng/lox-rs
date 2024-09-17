@@ -1,13 +1,13 @@
 use crate::{
     ast::Expr,
-    error::ScannerError,
+    error::LoxError,
     token::{Token, TokenType},
 };
 
 pub struct Parser {
     tokens: Vec<Token>,
     current: usize,
-    errors: Vec<ScannerError>,
+    errors: Vec<LoxError>,
 }
 
 impl Parser {
@@ -19,20 +19,20 @@ impl Parser {
         }
     }
 
-    pub fn parse(&mut self) -> Expr {
+    pub fn parse(&mut self) -> Result<Expr, LoxError> {
         self.expression()
     }
 
-    fn expression(&mut self) -> Expr {
+    fn expression(&mut self) -> Result<Expr, LoxError> {
         self.equality()
     }
 
-    fn equality(&mut self) -> Expr {
-        let mut expr = self.relational();
+    fn equality(&mut self) -> Result<Expr, LoxError> {
+        let mut expr = self.relational()?;
 
         while self.match_token(&[TokenType::EqualEqual, TokenType::BangEqual]) {
             let operator = self.previous().clone();
-            let right = self.relational();
+            let right = self.relational()?;
             expr = Expr::Binary {
                 left: Box::new(expr),
                 operator,
@@ -40,11 +40,11 @@ impl Parser {
             };
         }
 
-        expr
+        Ok(expr)
     }
 
-    fn relational(&mut self) -> Expr {
-        let mut expr = self.addition();
+    fn relational(&mut self) -> Result<Expr, LoxError> {
+        let mut expr = self.addition()?;
 
         while self.match_token(&[
             TokenType::Greater,
@@ -53,7 +53,7 @@ impl Parser {
             TokenType::LessEqual,
         ]) {
             let operator = self.previous().clone();
-            let right = self.addition();
+            let right = self.addition()?;
             expr = Expr::Binary {
                 left: Box::new(expr),
                 operator,
@@ -61,15 +61,15 @@ impl Parser {
             };
         }
 
-        expr
+        Ok(expr)
     }
 
-    fn addition(&mut self) -> Expr {
-        let mut expr = self.multiplication();
+    fn addition(&mut self) -> Result<Expr, LoxError> {
+        let mut expr = self.multiplication()?;
 
         while self.match_token(&[TokenType::Plus, TokenType::Minus]) {
             let operator = self.previous().clone();
-            let right = self.multiplication();
+            let right = self.multiplication()?;
             expr = Expr::Binary {
                 left: Box::new(expr),
                 operator,
@@ -77,15 +77,15 @@ impl Parser {
             };
         }
 
-        expr
+        Ok(expr)
     }
 
-    fn multiplication(&mut self) -> Expr {
-        let mut expr = self.unary();
+    fn multiplication(&mut self) -> Result<Expr, LoxError> {
+        let mut expr = self.unary()?;
 
         while self.match_token(&[TokenType::Star, TokenType::Slash]) {
             let operator = self.previous().clone();
-            let right = self.unary();
+            let right = self.unary()?;
             expr = Expr::Binary {
                 left: Box::new(expr),
                 operator,
@@ -93,43 +93,42 @@ impl Parser {
             };
         }
 
-        expr
+        Ok(expr)
     }
 
-    fn unary(&mut self) -> Expr {
+    fn unary(&mut self) -> Result<Expr, LoxError> {
         if self.match_token(&[TokenType::Bang, TokenType::Minus]) {
             let operator = self.previous().clone();
-            let right = Box::new(self.unary());
-            return Expr::Unary { operator, right };
+            let right = Box::new(self.unary()?);
+            return Ok(Expr::Unary { operator, right });
         }
         self.primary()
     }
 
-    fn primary(&mut self) -> Expr {
+    fn primary(&mut self) -> Result<Expr, LoxError> {
         if self.is_at_end() {
-            return Expr::Nil;
+            return Err(LoxError::new("Unexpected end of input", self.peek().line));
         }
 
         let token = self.advance();
 
         let lexeme = token.lexeme.clone();
-        let line = token.line;
 
         match token.token_type {
-            TokenType::String => Expr::String(lexeme),
-            TokenType::Number => Expr::Number(lexeme.parse::<f64>().unwrap_or(0.0)),
-            TokenType::True => Expr::Boolean(true),
-            TokenType::False => Expr::Boolean(false),
-            TokenType::Nil => Expr::Nil,
+            TokenType::String => Ok(Expr::String(lexeme)),
+            TokenType::Number => Ok(Expr::Number(lexeme.parse::<f64>().unwrap_or(0.0))),
+            TokenType::True => Ok(Expr::Boolean(true)),
+            TokenType::False => Ok(Expr::Boolean(false)),
+            TokenType::Nil => Ok(Expr::Nil),
             TokenType::LeftParen => {
-                let expr = self.expression();
-                self.consume(TokenType::RightParen);
-                Expr::Grouping(Box::new(expr))
+                let expr = self.expression()?;
+                self.consume(TokenType::RightParen)?;
+                Ok(Expr::Grouping(Box::new(expr)))
             }
-            _ => {
-                self.report_error(&format!("Unexpected token: '{}'", lexeme), line);
-                Expr::Nil
-            }
+            _ => Err(LoxError::new(
+                &format!("Unexpected token: '{}'", token.lexeme),
+                token.line,
+            )),
         }
     }
 
@@ -148,27 +147,23 @@ impl Parser {
         !self.errors.is_empty()
     }
 
-    fn report_error(&self, message: &str, line: usize) {
-        eprintln!("Error on line {}: {}", line, message);
-    }
-
     fn peek(&self) -> &Token {
         &self.tokens[self.current]
     }
 
-    fn consume(&mut self, expected: TokenType) {
+    fn consume(&mut self, expected: TokenType) -> Result<(), LoxError> {
         if self.is_at_end() || self.peek().token_type != expected {
             let current_token = self.peek();
-            self.report_error(
+            return Err(LoxError::new(
                 &format!(
-                    "Expected {:?}, but got {:?} on line {}.",
-                    expected, current_token.token_type, current_token.line
+                    "Expected {:?}, but got {:?}",
+                    expected, current_token.token_type
                 ),
                 current_token.line,
-            );
-        } else {
-            self.advance();
+            ));
         }
+        self.advance();
+        Ok(())
     }
 
     fn match_token(&mut self, types: &[TokenType]) -> bool {
