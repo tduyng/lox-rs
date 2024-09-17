@@ -53,7 +53,7 @@ impl Parser {
             TokenType::LessEqual,
         ]) {
             let operator = self.previous().clone();
-            let right = self.addition(); // Changed from multiplication to addition
+            let right = self.addition();
             expr = Expr::Binary {
                 left: Box::new(expr),
                 operator,
@@ -117,7 +117,7 @@ impl Parser {
 
         match token.token_type {
             TokenType::String => Expr::String(lexeme),
-            TokenType::Number => Expr::Number(lexeme.parse().unwrap_or(0.0)),
+            TokenType::Number => Expr::Number(lexeme.parse::<f64>().unwrap_or(0.0)),
             TokenType::True => Expr::Boolean(true),
             TokenType::False => Expr::Boolean(false),
             TokenType::Nil => Expr::Nil,

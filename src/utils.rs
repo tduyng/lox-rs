@@ -33,3 +33,11 @@ pub fn format_tokenized_number(value: &str) -> String {
     let number = value.parse::<f64>().unwrap_or(0.0);
     format_parsed_number(number)
 }
+
+pub fn pad_number(number: f64) -> String {
+    let mut value = number.to_string();
+    if !value.contains('.') {
+        value.push_str(".0");
+    }
+    value
+}
