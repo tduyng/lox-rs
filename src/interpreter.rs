@@ -1,10 +1,25 @@
-use crate::{ast::Expr, token::TokenType};
+use crate::{
+    ast::{Expr, Stmt},
+    token::TokenType,
+};
 
 pub struct Interpreter;
 
 impl Interpreter {
     pub fn new() -> Self {
         Self
+    }
+
+    pub fn interpret(&mut self, stmt: Stmt) {
+        match stmt {
+            Stmt::Print(expr) => {
+                let value = self.evaluate(expr);
+                self.print_value(value);
+            }
+            Stmt::Expression(expr) => {
+                self.evaluate(expr);
+            }
+        }
     }
 
     pub fn evaluate(&mut self, expr: Expr) -> Expr {
@@ -45,6 +60,24 @@ impl Interpreter {
                 self.handle_binary_op(left_val, &operator.token_type, right_val, line)
             }
             Expr::Grouping(inner_expr) => self.evaluate(*inner_expr),
+        }
+    }
+
+    pub fn print_value(&self, value: Expr) {
+        match value {
+            Expr::String(s) => println!("{}", s),
+            Expr::Number(n) => println!("{}", n),
+            Expr::Boolean(b) => println!("{}", b),
+            Expr::Nil => println!("nil"),
+            Expr::Unary { operator, right } => {
+                println!("({} {})", operator.lexeme, right)
+            }
+            Expr::Binary {
+                left,
+                operator,
+                right,
+            } => println!("({} {} {})", operator.lexeme, left, right),
+            Expr::Grouping(expr) => println!("(group {})", expr),
         }
     }
 

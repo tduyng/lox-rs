@@ -1,5 +1,5 @@
 use super::Command;
-use crate::{error::ExitCode, parser::Parser, scanner::Scanner};
+use crate::{ast::Stmt, error::ExitCode, parser::Parser, scanner::Scanner};
 use std::process;
 
 pub struct ParseCommand {
@@ -10,6 +10,17 @@ impl ParseCommand {
     pub fn new(file_contents: String) -> Self {
         Self { file_contents }
     }
+
+    fn handle_statement(&self, stmt: Stmt) {
+        match stmt {
+            Stmt::Expression(expr) => {
+                println!("{}", expr);
+            }
+            Stmt::Print(expr) => {
+                println!("Print: {}", expr);
+            }
+        }
+    }
 }
 
 impl Command for ParseCommand {
@@ -19,12 +30,12 @@ impl Command for ParseCommand {
         let mut parser = Parser::new(tokens.to_vec());
 
         match parser.parse() {
-            Ok(expression) => {
-                println!("{}", expression);
+            Ok(statement) => {
+                self.handle_statement(statement);
                 process::exit(0)
             }
             Err(e) => {
-                eprintln!("{}", e);
+                eprintln!("Error during parsing: {}", e);
                 process::exit(65)
             }
         }

@@ -1,5 +1,5 @@
 use crate::{
-    ast::Expr,
+    ast::{Expr, Stmt},
     error::LoxError,
     token::{Token, TokenType},
 };
@@ -7,20 +7,34 @@ use crate::{
 pub struct Parser {
     tokens: Vec<Token>,
     current: usize,
-    errors: Vec<LoxError>,
 }
 
 impl Parser {
     pub fn new(tokens: Vec<Token>) -> Self {
-        Self {
-            tokens,
-            current: 0,
-            errors: Vec::new(),
-        }
+        Self { tokens, current: 0 }
     }
 
-    pub fn parse(&mut self) -> Result<Expr, LoxError> {
-        self.expression()
+    pub fn parse(&mut self) -> Result<Stmt, LoxError> {
+        self.statement()
+    }
+
+    fn statement(&mut self) -> Result<Stmt, LoxError> {
+        if self.match_token(&[TokenType::Print]) {
+            return self.print_statement();
+        }
+        self.expression_statement()
+    }
+
+    fn print_statement(&mut self) -> Result<Stmt, LoxError> {
+        let value = self.expression()?;
+        self.consume(TokenType::Semicolon)?;
+        Ok(Stmt::Print(value))
+    }
+
+    fn expression_statement(&mut self) -> Result<Stmt, LoxError> {
+        let expr = self.expression()?;
+        // self.consume(TokenType::Semicolon)?;
+        Ok(Stmt::Expression(expr))
     }
 
     fn expression(&mut self) -> Result<Expr, LoxError> {
@@ -111,9 +125,7 @@ impl Parser {
         }
 
         let token = self.advance();
-
         let lexeme = token.lexeme.clone();
-
         match token.token_type {
             TokenType::String => Ok(Expr::String(lexeme)),
             TokenType::Number => Ok(Expr::Number(lexeme.parse::<f64>().unwrap_or(0.0))),
@@ -143,16 +155,18 @@ impl Parser {
         self.current >= self.tokens.len()
     }
 
-    pub fn had_errors(&self) -> bool {
-        !self.errors.is_empty()
-    }
-
     fn peek(&self) -> &Token {
         &self.tokens[self.current]
     }
 
     fn consume(&mut self, expected: TokenType) -> Result<(), LoxError> {
-        if self.is_at_end() || self.peek().token_type != expected {
+        if self.is_at_end() {
+            let eof_token = self.peek();
+            return Err(LoxError::new(
+                &format!("Expected {:?}, but got Eof", expected),
+                eof_token.line,
+            ));
+        } else if self.peek().token_type != expected {
             let current_token = self.peek();
             return Err(LoxError::new(
                 &format!(

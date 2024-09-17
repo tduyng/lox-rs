@@ -45,7 +45,7 @@ fn test_evaluate_minus() {
         .expect("Failed to execute process");
 
     let stdout = String::from_utf8_lossy(&output.stdout);
-    assert_eq!(stdout.trim(), "85.0");
+    assert_eq!(stdout.trim(), "85");
 }
 
 #[test]

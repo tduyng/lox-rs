@@ -37,3 +37,8 @@ impl fmt::Display for Expr {
         }
     }
 }
+
+pub enum Stmt {
+    Print(Expr),
+    Expression(Expr),
+}

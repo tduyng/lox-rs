@@ -1,7 +1,7 @@
 use std::process::Command;
 
 #[test]
-fn test_empty_file_tokenize() {
+fn test_scanning_empty_file_tokenize() {
     let output = Command::new("./target/debug/lox-rs")
         .arg("tokenize")
         .arg("tests/scanning/lox_files/empty.lox")
@@ -13,7 +13,7 @@ fn test_empty_file_tokenize() {
 }
 
 #[test]
-fn test_var_declaration_tokenize() {
+fn test_scanning_var_declaration_tokenize() {
     let output = Command::new("./target/debug/lox-rs")
         .arg("tokenize")
         .arg("tests/scanning/lox_files/var_declaration.lox")
@@ -26,7 +26,7 @@ fn test_var_declaration_tokenize() {
 }
 
 #[test]
-fn test_error_unknown_keyword() {
+fn test_scanning_error_unknown_keyword() {
     let output = Command::new("./target/debug/lox-rs")
         .arg("tokenize")
         .arg("tests/scanning/lox_files/error.lox")
@@ -40,7 +40,7 @@ fn test_error_unknown_keyword() {
 }
 
 #[test]
-fn test_double_characters() {
+fn test_scanning_double_characters() {
     let output = Command::new("./target/debug/lox-rs")
         .arg("tokenize")
         .arg("tests/scanning/lox_files/double_characters.lox")
@@ -54,7 +54,7 @@ fn test_double_characters() {
 }
 
 #[test]
-fn test_string_handling() {
+fn test_scanning_string_handling() {
     let output = Command::new("./target/debug/lox-rs")
         .arg("tokenize")
         .arg("tests/scanning/lox_files/string.lox")
@@ -67,7 +67,7 @@ fn test_string_handling() {
 }
 
 #[test]
-fn test_number_handling() {
+fn test_scanning_number_handling() {
     let output = Command::new("./target/debug/lox-rs")
         .arg("tokenize")
         .arg("tests/scanning/lox_files/number.lox")
@@ -81,7 +81,7 @@ fn test_number_handling() {
 }
 
 #[test]
-fn test_identifier_handling() {
+fn test_scanning_identifier_handling() {
     let output = Command::new("./target/debug/lox-rs")
         .arg("tokenize")
         .arg("tests/scanning/lox_files/identifier.lox")

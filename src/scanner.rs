@@ -32,12 +32,17 @@ impl Scanner {
 
         self.tokens
             .push(Token::new(TokenType::Eof, "".to_string(), None, self.line));
+
         &self.tokens
     }
 
     fn scan_token(&mut self) {
         let c = self.advance();
         match c {
+            'p' if self.look_ahead(5) == "print" => {
+                self.add_token(TokenType::Print);
+                self.current += 4;
+            }
             '(' => self.add_token(TokenType::LeftParen),
             ')' => self.add_token(TokenType::RightParen),
             '}' => self.add_token(TokenType::RightBrace),
@@ -79,7 +84,6 @@ impl Scanner {
             }
             '/' => {
                 if self.match_next('/') {
-                    // It's a comment, ignore it by consuming characters till end of line
                     while self.peek() != '\n' && !self.is_at_end() {
                         self.advance();
                     }
@@ -227,6 +231,12 @@ impl Scanner {
 
     fn is_at_end(&self) -> bool {
         self.current >= self.source.len()
+    }
+
+    fn look_ahead(&self, length: usize) -> String {
+        let start = self.current;
+        let end = (start + length).min(self.source.len());
+        self.source[start..end].to_string()
     }
 
     fn report_error(&mut self, error: LoxError) {

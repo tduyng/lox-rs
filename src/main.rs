@@ -4,6 +4,7 @@ use std::process;
 
 use command::evaluate::EvaluateCommand;
 use command::parse::ParseCommand;
+use command::run::RunCommand;
 use command::tokenize::TokenizeCommand;
 use command::Command;
 
@@ -35,6 +36,7 @@ fn main() {
         "tokenize" => Box::new(TokenizeCommand::new(file_contents)),
         "evaluate" => Box::new(EvaluateCommand::new(file_contents)),
         "parse" => Box::new(ParseCommand::new(file_contents)),
+        "run" => Box::new(RunCommand::new(file_contents)),
         _ => {
             eprintln!("Unknown command: {}", command_name);
             process::exit(64);
