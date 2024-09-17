@@ -1,6 +1,6 @@
 use std::process;
 
-use crate::{error::ExitCode, scanner::Scanner, token::TokenType, utils::format_tokenized_number};
+use crate::{error::ExitCode, scanner::Scanner, token::TokenType, utils::pad_number};
 
 use super::Command;
 
@@ -29,7 +29,7 @@ impl Command for TokenizeCommand {
 
             let literal_str = match &token.literal {
                 Some(value) if token.token_type == TokenType::Number => {
-                    format_tokenized_number(value)
+                    pad_number(value.parse::<f64>().unwrap_or(0.0))
                 }
                 Some(value) => value.clone(),
                 None => "null".to_string(),

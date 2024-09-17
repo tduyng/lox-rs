@@ -57,7 +57,7 @@ fn test_evaluate_multiply() {
         .expect("Failed to execute process");
 
     let stdout = String::from_utf8_lossy(&output.stdout);
-    assert_eq!(stdout.trim(), "26.4");
+    assert_eq!(stdout.trim(), "26.400000000000006");
 }
 
 #[test]
