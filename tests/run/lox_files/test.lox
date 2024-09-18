@@ -1,8 +1,6 @@
+var baz = (91 * 16) - 61;
 {
-    var hello = 88;
-    {
-        var foo = 88;
-        print foo;
-    }
-    print hello;
+    var world = "quz" + "89";
+    print world;
 }
+print baz;

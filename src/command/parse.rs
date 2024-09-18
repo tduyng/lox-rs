@@ -17,11 +17,8 @@ impl ParseCommand {
     }
 
     fn handle_statement(&self, stmt: Stmt) {
-        match stmt {
-            Stmt::Expression(expr) => {
-                println!("{}", expr);
-            }
-            _ => {}
+        if let Stmt::Expression(expr) = stmt {
+            println!("{}", expr);
         }
     }
 }

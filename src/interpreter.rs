@@ -42,11 +42,19 @@ impl Interpreter {
     }
 
     fn execute_block(&mut self, statements: Vec<Stmt>) -> Result<(), LoxError> {
-        let previous_environment = std::mem::replace(&mut self.environment, Environment::new());
+        let previous_environment = self.environment.clone();
+        self.environment = Environment::with_parent(previous_environment);
+
         for stmt in statements {
             self.execute(stmt)?;
         }
-        self.environment = previous_environment;
+
+        self.environment = *self
+            .environment
+            .parent
+            .clone()
+            .unwrap_or_else(|| panic!("Parent environment was expected but not found."));
+
         Ok(())
     }
 
