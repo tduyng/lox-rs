@@ -2,3 +2,7 @@ print "Hello, World!";
 print 42;
 print true;
 print 12 + 24;
+print "non-ascii";
+print "(" + "" + ")";
+
+print "There should be an empty line above this.";

@@ -35,7 +35,7 @@ fn test_scanning_error_unknown_keyword() {
 
     let stdout = String::from_utf8_lossy(&output.stdout);
     let expected_output =
-        "COMMA , null\nDOT . null\nLEFT_PAREN ( null\nSEMICOLON ; null\nLESS < null\nIDENTIFIER SPACE null\nGREATER > null\nLEFT_PAREN ( null\nSEMICOLON ; null\nRIGHT_PAREN ) null\nLESS < null\nIDENTIFIER TAB null\nGREATER > null\nSEMICOLON ; null\nEOF  null";
+        "COMMA , null\nDOT . null\nIDENTIFIER $ null\nLEFT_PAREN ( null\nIDENTIFIER # null\nSEMICOLON ; null\nIDENTIFIER # null\nLESS < null\nIDENTIFIER |SPACE null\nIDENTIFIER | null\nGREATER > null\nLEFT_PAREN ( null\nSEMICOLON ; null\nRIGHT_PAREN ) null\nLESS < null\nIDENTIFIER |TAB null\nIDENTIFIER | null\nGREATER > null\nIDENTIFIER @ null\nSEMICOLON ; null\nEOF  null";
     assert_eq!(stdout.trim(), expected_output);
 }
 

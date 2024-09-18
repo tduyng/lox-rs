@@ -45,14 +45,25 @@ impl Scanner {
             }
             '(' => self.add_token(TokenType::LeftParen),
             ')' => self.add_token(TokenType::RightParen),
-            '}' => self.add_token(TokenType::RightBrace),
             '{' => self.add_token(TokenType::LeftBrace),
-            '*' => self.add_token(TokenType::Star),
-            '.' => self.add_token(TokenType::Dot),
+            '}' => self.add_token(TokenType::RightBrace),
             ',' => self.add_token(TokenType::Comma),
+            '.' => self.add_token(TokenType::Dot),
             '+' => self.add_token(TokenType::Plus),
             '-' => self.add_token(TokenType::Minus),
-            ';' => self.add_token(TokenType::Semicolon),
+            '*' => self.add_token(TokenType::Star),
+            '/' => {
+                if self.match_next('/') {
+                    while self.peek() != '\n' && !self.is_at_end() {
+                        self.advance();
+                    }
+                    if self.peek() == '\n' {
+                        self.line += 1;
+                    }
+                } else {
+                    self.add_token(TokenType::Slash);
+                }
+            }
             '"' => self.string(),
             '=' => {
                 if self.match_next('=') {
@@ -68,13 +79,7 @@ impl Scanner {
                     self.add_token(TokenType::Bang);
                 }
             }
-            '<' => {
-                if self.match_next('=') {
-                    self.add_token(TokenType::LessEqual);
-                } else {
-                    self.add_token(TokenType::Less);
-                }
-            }
+            ';' => self.add_token(TokenType::Semicolon),
             '>' => {
                 if self.match_next('=') {
                     self.add_token(TokenType::GreaterEqual);
@@ -82,44 +87,35 @@ impl Scanner {
                     self.add_token(TokenType::Greater);
                 }
             }
-            '/' => {
-                if self.match_next('/') {
-                    while self.peek() != '\n' && !self.is_at_end() {
-                        self.advance();
-                    }
+            '<' => {
+                if self.match_next('=') {
+                    self.add_token(TokenType::LessEqual);
                 } else {
-                    self.add_token(TokenType::Slash);
+                    self.add_token(TokenType::Less);
                 }
             }
-            c if c.is_alphabetic() || c == '_' => self.identifier(),
+            ' ' | '\r' | '\t' => {
+                // Ignore other whitespace characters
+            }
+            '\n' => self.line += 1,
+            c if c.is_alphabetic()
+                || c == '_'
+                || c.is_ascii_punctuation()
+                || c.is_ascii_whitespace() =>
+            {
+                self.identifier()
+            }
             c if c.is_ascii_digit() => self.number(),
-            c if c.is_whitespace() => {
-                // Ignore whitespace (spaces, tabs, and carriage returns)
-            }
-            '\n' => {
-                self.line += 1;
-            }
-            _ => {
-                if c.is_whitespace() {
-                    if c == '\n' {
-                        self.line += 1;
-                    }
-                } else {
-                    self.report_error(LoxError::new(
-                        &format!("Unexpected character: {}", c),
-                        self.line,
-                    ));
-                }
-            }
+            _ => self.report_error(LoxError::new(
+                &format!("Unexpected character: {}", c),
+                self.line,
+            )),
         }
     }
 
     fn advance(&mut self) -> char {
         let c = self.source[self.current..].chars().next().unwrap();
         self.current += c.len_utf8();
-        if c == '\n' {
-            self.line += 1;
-        }
         c
     }
 
@@ -130,19 +126,15 @@ impl Scanner {
     }
 
     fn string(&mut self) {
-        while self.peek() != '"' && !self.is_at_end() {
+        while !self.is_at_end() && self.peek() != '"' {
             if self.peek() == '\n' {
                 self.line += 1;
             }
             self.advance();
         }
 
-        if self.is_at_end() {
-            self.report_error(LoxError::new("Unterminated string.", self.line));
-            return;
-        }
+        self.advance(); // Skip the closing quote
 
-        self.advance();
         let value = self.source[self.start + 1..self.current - 1].to_string();
         self.tokens.push(Token::new(
             TokenType::String,
@@ -230,7 +222,7 @@ impl Scanner {
     }
 
     fn is_at_end(&self) -> bool {
-        self.current >= self.source.len()
+        self.peek() == '\0' || self.current >= self.source.len()
     }
 
     fn look_ahead(&self, length: usize) -> String {
