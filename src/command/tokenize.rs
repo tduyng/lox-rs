@@ -1,6 +1,11 @@
 use std::process;
 
-use crate::{error::ExitCode, scanner::Scanner, token::TokenType, utils::pad_number};
+use crate::{
+    error::{ExitCode, LoxError},
+    scanner::Scanner,
+    token::TokenType,
+    utils::pad_number,
+};
 
 use super::Command;
 
@@ -15,7 +20,7 @@ impl TokenizeCommand {
 }
 
 impl Command for TokenizeCommand {
-    fn execute(&self) -> ExitCode {
+    fn execute(&self) -> Result<ExitCode, LoxError> {
         let mut scanner = Scanner::new(self.file_contents.clone());
         let tokens = scanner.scan_tokens();
 
@@ -37,9 +42,11 @@ impl Command for TokenizeCommand {
 
             println!("{} {} {}", token_type, lexeme, literal_str);
         }
-        if scanner.had_errors() {
+
+        if scanner.has_error() {
             process::exit(65);
         }
+
         process::exit(0)
     }
 }

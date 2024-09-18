@@ -1,5 +1,10 @@
 use super::Command;
-use crate::{ast::Stmt, error::ExitCode, parser::Parser, scanner::Scanner};
+use crate::{
+    ast::Stmt,
+    error::{ExitCode, LoxError},
+    parser::Parser,
+    scanner::Scanner,
+};
 use std::process;
 
 pub struct ParseCommand {
@@ -24,10 +29,14 @@ impl ParseCommand {
 }
 
 impl Command for ParseCommand {
-    fn execute(&self) -> ExitCode {
+    fn execute(&self) -> Result<ExitCode, LoxError> {
         let mut scanner = Scanner::new(self.file_contents.clone());
         let tokens = scanner.scan_tokens();
         let mut parser = Parser::new(tokens.to_vec());
+
+        if scanner.has_error() {
+            process::exit(65);
+        }
 
         match parser.parse() {
             Ok(statement) => {
@@ -37,7 +46,7 @@ impl Command for ParseCommand {
                 process::exit(0)
             }
             Err(e) => {
-                eprintln!("Error during parsing: {}", e);
+                eprintln!("{}", e);
                 process::exit(65)
             }
         }

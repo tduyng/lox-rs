@@ -2,8 +2,8 @@ use std::fmt;
 
 #[derive(Debug)]
 pub struct LoxError {
-    message: String,
-    line: usize,
+    pub message: String,
+    pub line: usize,
 }
 
 impl LoxError {

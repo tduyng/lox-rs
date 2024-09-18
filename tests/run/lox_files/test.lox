@@ -1,12 +1,4 @@
-print "Hello, World!";
-print 42;
-print true;
-print 12 + 24;
-print "non-ascii: 👋🌍";
-print "(" + "" + ")";
-
-print "There should be an empty line above this.";
-
-
-
-print "other multiple empty line before";
+(37 + 42 - 21) > (76 - 37) * 2;
+print !false;
+"baz" + "hello" + "quz" + "bar" == "bazhelloquzbar";
+print !false;

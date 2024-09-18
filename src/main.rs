@@ -7,6 +7,7 @@ use command::parse::ParseCommand;
 use command::run::RunCommand;
 use command::tokenize::TokenizeCommand;
 use command::Command;
+use error::LoxError;
 
 mod ast;
 mod command;
@@ -17,11 +18,11 @@ mod scanner;
 mod token;
 mod utils;
 
-fn main() {
+fn main() -> Result<(), LoxError> {
     let args: Vec<String> = env::args().collect();
     if args.len() < 3 {
         eprintln!("Usage: {} tokenize <filename>", args[0]);
-        return;
+        return Ok(());
     }
 
     let command_name = &args[1];
@@ -43,6 +44,6 @@ fn main() {
         }
     };
 
-    let exit_code = command.execute();
+    let exit_code = command.execute()?;
     process::exit(exit_code.code());
 }

@@ -9,7 +9,7 @@ pub struct Scanner {
     start: usize,
     current: usize,
     line: usize,
-    errors: Vec<LoxError>,
+    has_error: bool,
 }
 
 impl Scanner {
@@ -20,14 +20,17 @@ impl Scanner {
             start: 0,
             current: 0,
             line: 1,
-            errors: Vec::new(),
+            has_error: false,
         }
     }
 
     pub fn scan_tokens(&mut self) -> &Vec<Token> {
         while !self.is_at_end() {
             self.start = self.current;
-            self.scan_token();
+            if let Err(err) = self.scan_token() {
+                self.report_error(err);
+                self.has_error = true;
+            }
         }
 
         self.tokens
@@ -36,12 +39,13 @@ impl Scanner {
         &self.tokens
     }
 
-    fn scan_token(&mut self) {
+    fn scan_token(&mut self) -> Result<(), LoxError> {
         let c = self.advance();
         match c {
             'p' if self.look_ahead(5) == "print" => {
-                self.add_token(TokenType::Print);
+                self.add_token(TokenType::Print)?;
                 self.current += 4;
+                Ok(())
             }
             '(' => self.add_token(TokenType::LeftParen),
             ')' => self.add_token(TokenType::RightParen),
@@ -57,75 +61,63 @@ impl Scanner {
                     while self.peek() != '\n' && !self.is_at_end() {
                         self.advance();
                     }
-                    if self.peek() == '\n' {
-                        self.line += 1;
-                    }
+                    Ok(())
                 } else {
-                    self.add_token(TokenType::Slash);
+                    self.add_token(TokenType::Slash)
                 }
             }
             '"' => self.string(),
             '=' => {
                 if self.match_next('=') {
-                    self.add_token(TokenType::EqualEqual);
+                    self.add_token(TokenType::EqualEqual)
                 } else {
-                    self.add_token(TokenType::Equal);
+                    self.add_token(TokenType::Equal)
                 }
             }
             '!' => {
                 if self.match_next('=') {
-                    self.add_token(TokenType::BangEqual);
+                    self.add_token(TokenType::BangEqual)
                 } else {
-                    self.add_token(TokenType::Bang);
+                    self.add_token(TokenType::Bang)
                 }
             }
             ';' => self.add_token(TokenType::Semicolon),
             '>' => {
                 if self.match_next('=') {
-                    self.add_token(TokenType::GreaterEqual);
+                    self.add_token(TokenType::GreaterEqual)
                 } else {
-                    self.add_token(TokenType::Greater);
+                    self.add_token(TokenType::Greater)
                 }
             }
             '<' => {
                 if self.match_next('=') {
-                    self.add_token(TokenType::LessEqual);
+                    self.add_token(TokenType::LessEqual)
                 } else {
-                    self.add_token(TokenType::Less);
+                    self.add_token(TokenType::Less)
                 }
             }
-            ' ' | '\r' | '\t' => {
-                // Ignore other whitespace characters
+            ' ' | '\r' | '\t' => Ok(()), // Ignore whitespace
+            '\n' => {
+                self.line += 1;
+                Ok(())
             }
-            '\n' => self.line += 1,
-            c if c.is_alphabetic()
-                || c == '_'
-                || c.is_ascii_punctuation()
-                || c.is_ascii_whitespace() =>
-            {
-                self.identifier()
-            }
+            c if c.is_alphabetic() || c == '_' => self.identifier(),
             c if c.is_ascii_digit() => self.number(),
-            _ => self.report_error(LoxError::new(
+            _ => Err(LoxError::new(
                 &format!("Unexpected character: {}", c),
                 self.line,
             )),
         }
     }
 
-    fn advance(&mut self) -> char {
-        let c = self.source[self.current..].chars().next().unwrap();
-        self.current += c.len_utf8();
-        c
-    }
-
-    fn add_token(&mut self, token_type: TokenType) {
+    fn add_token(&mut self, token_type: TokenType) -> Result<(), LoxError> {
         let lexeme = self.source[self.start..self.current].to_string();
         self.tokens
             .push(Token::new(token_type, lexeme, None, self.line));
+        Ok(())
     }
 
-    fn string(&mut self) {
+    fn string(&mut self) -> Result<(), LoxError> {
         while !self.is_at_end() && self.peek() != '"' {
             if self.peek() == '\n' {
                 self.line += 1;
@@ -134,8 +126,7 @@ impl Scanner {
         }
 
         if self.is_at_end() {
-            self.report_error(LoxError::new("Unterminated string literal", self.line));
-            return;
+            return Err(LoxError::new("Unterminated string.", self.line));
         }
 
         self.advance(); // Skip the closing quote
@@ -147,9 +138,10 @@ impl Scanner {
             Some(value),
             self.line,
         ));
+        Ok(())
     }
 
-    fn number(&mut self) {
+    fn number(&mut self) -> Result<(), LoxError> {
         while self.peek().is_ascii_digit() {
             self.advance();
         }
@@ -170,9 +162,10 @@ impl Scanner {
             Some(value),
             self.line,
         ));
+        Ok(())
     }
 
-    fn identifier(&mut self) {
+    fn identifier(&mut self) -> Result<(), LoxError> {
         while self.peek().is_alphanumeric() || self.peek() == '_' {
             self.advance();
         }
@@ -199,6 +192,13 @@ impl Scanner {
         };
         self.tokens
             .push(Token::new(token_type, lexeme, None, self.line));
+        Ok(())
+    }
+
+    fn advance(&mut self) -> char {
+        let c = self.source[self.current..].chars().next().unwrap();
+        self.current += c.len_utf8();
+        c
     }
 
     fn match_next(&mut self, expected: char) -> bool {
@@ -236,12 +236,11 @@ impl Scanner {
         self.source[start..end].to_string()
     }
 
-    fn report_error(&mut self, error: LoxError) {
-        eprintln!("{}", error);
-        self.errors.push(error);
+    fn report_error(&self, error: LoxError) {
+        eprintln!("[line {}] Error: {}", error.line, error.message);
     }
 
-    pub fn had_errors(&self) -> bool {
-        !self.errors.is_empty()
+    pub fn has_error(&self) -> bool {
+        self.has_error
     }
 }

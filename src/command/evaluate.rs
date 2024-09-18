@@ -1,7 +1,11 @@
 use std::process;
 
 use crate::{
-    ast::Stmt, error::ExitCode, interpreter::Interpreter, parser::Parser, scanner::Scanner,
+    ast::Stmt,
+    error::{ExitCode, LoxError},
+    interpreter::Interpreter,
+    parser::Parser,
+    scanner::Scanner,
 };
 
 use super::Command;
@@ -17,25 +21,32 @@ impl EvaluateCommand {
 }
 
 impl Command for EvaluateCommand {
-    fn execute(&self) -> ExitCode {
+    fn execute(&self) -> Result<ExitCode, LoxError> {
         let mut scanner = Scanner::new(self.file_contents.clone());
         let tokens = scanner.scan_tokens();
         let mut parser = Parser::new(tokens.to_vec());
+
+        if scanner.has_error() {
+            process::exit(65);
+        }
         let statement = match parser.parse() {
             Ok(stmt) => stmt,
             Err(e) => {
-                eprintln!("Parsing error: {}", e);
+                eprintln!("{}", e);
                 process::exit(65);
             }
         };
         let mut interpreter = Interpreter::new();
         for statement in statement {
-            match statement {
-                Stmt::Expression(expr) => {
-                    let expr = interpreter.evaluate(expr);
-                    interpreter.print_value(expr);
-                }
-                _ => {}
+            if let Stmt::Expression(expr) = statement {
+                let expr = match interpreter.evaluate(expr) {
+                    Ok(value) => value,
+                    Err(e) => {
+                        eprintln!("{}", e);
+                        process::exit(70);
+                    }
+                };
+                interpreter.print_value(expr);
             }
         }
 

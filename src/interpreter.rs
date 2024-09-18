@@ -1,5 +1,6 @@
 use crate::{
     ast::{Expr, Stmt},
+    error::LoxError,
     token::TokenType,
 };
 
@@ -10,45 +11,42 @@ impl Interpreter {
         Self
     }
 
-    pub fn interpret(&mut self, statements: Vec<Stmt>) {
+    pub fn interpret(&mut self, statements: Vec<Stmt>) -> Result<(), LoxError> {
         for statement in statements {
             match statement {
                 Stmt::Print(expr) => {
-                    let value = self.evaluate(expr);
+                    let value = self.evaluate(expr)?;
                     self.print_value(value);
                 }
                 Stmt::Expression(expr) => {
-                    self.evaluate(expr);
+                    self.evaluate(expr)?;
                 }
             }
         }
+        Ok(())
     }
 
-    pub fn evaluate(&mut self, expr: Expr) -> Expr {
+    pub fn evaluate(&mut self, expr: Expr) -> Result<Expr, LoxError> {
         match expr {
-            Expr::String(s) => Expr::String(s),
-            Expr::Number(n) => Expr::Number(n),
-            Expr::Boolean(b) => Expr::Boolean(b),
-            Expr::Nil => Expr::Nil,
+            Expr::String(s) => Ok(Expr::String(s)),
+            Expr::Number(n) => Ok(Expr::Number(n)),
+            Expr::Boolean(b) => Ok(Expr::Boolean(b)),
+            Expr::Nil => Ok(Expr::Nil),
             Expr::Unary { operator, right } => {
-                let right_val = self.evaluate(*right);
-                let line_number = operator.line;
+                let right_val = self.evaluate(*right)?;
+                let line = operator.line;
                 match operator.token_type {
                     TokenType::Minus => {
                         if let Expr::Number(n) = right_val {
-                            return Expr::Number(-n);
+                            return Ok(Expr::Number(-n));
                         }
-                        eprintln!("Operand must be a number.\n[line {}]", line_number);
-                        std::process::exit(70);
+                        Err(LoxError::new("Operand must be a number", line))
                     }
                     TokenType::Bang => {
                         let is_truthy = self.is_truthy(&right_val);
-                        Expr::Boolean(!is_truthy)
+                        Ok(Expr::Boolean(!is_truthy))
                     }
-                    _ => {
-                        eprintln!("Unknown unary operator.\n[line {}]", line_number);
-                        std::process::exit(70);
-                    }
+                    _ => Err(LoxError::new("Unknown unary operator", line)),
                 }
             }
             Expr::Binary {
@@ -56,8 +54,8 @@ impl Interpreter {
                 operator,
                 right,
             } => {
-                let left_val = self.evaluate(*left);
-                let right_val = self.evaluate(*right);
+                let left_val = self.evaluate(*left)?;
+                let right_val = self.evaluate(*right)?;
                 let line = operator.line;
                 self.handle_binary_op(left_val, &operator.token_type, right_val, line)
             }
@@ -83,7 +81,13 @@ impl Interpreter {
         }
     }
 
-    fn handle_binary_op(&self, left: Expr, operator: &TokenType, right: Expr, line: usize) -> Expr {
+    fn handle_binary_op(
+        &self,
+        left: Expr,
+        operator: &TokenType,
+        right: Expr,
+        line: usize,
+    ) -> Result<Expr, LoxError> {
         match operator {
             TokenType::Plus => self.handle_plus(left, right, line),
             TokenType::Minus => self.handle_minus(left, right, line),
@@ -95,97 +99,86 @@ impl Interpreter {
             TokenType::LessEqual => self.handle_less_equal(left, right, line),
             TokenType::EqualEqual => self.handle_equal_equal(left, right),
             TokenType::BangEqual => self.handle_bang_equal(left, right),
-            _ => Expr::Nil,
+            _ => Ok(Expr::Nil),
         }
     }
 
-    fn handle_plus(&self, left: Expr, right: Expr, line: usize) -> Expr {
+    fn handle_plus(&self, left: Expr, right: Expr, line: usize) -> Result<Expr, LoxError> {
         match (left, right) {
-            (Expr::Number(l), Expr::Number(r)) => Expr::Number(l + r),
-            (Expr::String(l), Expr::String(r)) => Expr::String(format!("{}{}", l, r)),
-            _ => {
-                eprintln!(
-                    "Operands must be two numbers or two strings.\n[line {}]",
-                    line
-                );
-                std::process::exit(70);
-            }
+            (Expr::Number(l), Expr::Number(r)) => Ok(Expr::Number(l + r)),
+            (Expr::String(l), Expr::String(r)) => Ok(Expr::String(format!("{}{}", l, r))),
+            _ => Err(LoxError::new(
+                "Operands must be two numbers or two strings",
+                line,
+            )),
         }
     }
 
-    fn handle_minus(&self, left: Expr, right: Expr, line: usize) -> Expr {
+    fn handle_minus(&self, left: Expr, right: Expr, line: usize) -> Result<Expr, LoxError> {
         if let (Expr::Number(l), Expr::Number(r)) = (left, right) {
-            Expr::Number(l - r)
+            Ok(Expr::Number(l - r))
         } else {
-            eprintln!("Operands must be numbers.\n[line {}]", line);
-            std::process::exit(70);
+            Err(LoxError::new("Operands must be numbers.", line))
         }
     }
 
-    fn handle_divide(&self, left: Expr, right: Expr, line: usize) -> Expr {
+    fn handle_divide(&self, left: Expr, right: Expr, line: usize) -> Result<Expr, LoxError> {
         if let (Expr::Number(l), Expr::Number(r)) = (left, right) {
             if r == 0.0 {
-                eprintln!("Division by zero.\n[line {}]", line);
-                std::process::exit(70);
+                return Err(LoxError::new("Division by zero", line));
             }
-            Expr::Number(l / r)
+            Ok(Expr::Number(l / r))
         } else {
-            eprintln!("Operands must be numbers.\n[line {}]", line);
-            std::process::exit(70);
+            Err(LoxError::new("Operands must be numbers.", line))
         }
     }
 
-    fn handle_multiply(&self, left: Expr, right: Expr, line: usize) -> Expr {
+    fn handle_multiply(&self, left: Expr, right: Expr, line: usize) -> Result<Expr, LoxError> {
         if let (Expr::Number(l), Expr::Number(r)) = (left, right) {
-            Expr::Number(l * r)
+            Ok(Expr::Number(l * r))
         } else {
-            eprintln!("Operands must be numbers.\n[line {}]", line);
-            std::process::exit(70);
+            Err(LoxError::new("Operands must be numbers.", line))
         }
     }
 
-    fn handle_greater(&self, left: Expr, right: Expr, line: usize) -> Expr {
+    fn handle_greater(&self, left: Expr, right: Expr, line: usize) -> Result<Expr, LoxError> {
         if let (Expr::Number(l), Expr::Number(r)) = (left, right) {
-            Expr::Boolean(l > r)
+            Ok(Expr::Boolean(l > r))
         } else {
-            eprintln!("Operands must be numbers.\n[line {}]", line);
-            std::process::exit(70);
+            Err(LoxError::new("Operands must be numbers.", line))
         }
     }
 
-    fn handle_greater_equal(&self, left: Expr, right: Expr, line: usize) -> Expr {
+    fn handle_greater_equal(&self, left: Expr, right: Expr, line: usize) -> Result<Expr, LoxError> {
         if let (Expr::Number(l), Expr::Number(r)) = (left, right) {
-            Expr::Boolean(l >= r)
+            Ok(Expr::Boolean(l >= r))
         } else {
-            eprintln!("Operands must be numbers.\n[line {}]", line);
-            std::process::exit(70);
+            Err(LoxError::new("Operands must be numbers.", line))
         }
     }
 
-    fn handle_less(&self, left: Expr, right: Expr, line: usize) -> Expr {
+    fn handle_less(&self, left: Expr, right: Expr, line: usize) -> Result<Expr, LoxError> {
         if let (Expr::Number(l), Expr::Number(r)) = (left, right) {
-            Expr::Boolean(l < r)
+            Ok(Expr::Boolean(l < r))
         } else {
-            eprintln!("Operands must be numbers.\n[line {}]", line);
-            std::process::exit(70);
+            Err(LoxError::new("Operands must be numbers.", line))
         }
     }
 
-    fn handle_less_equal(&self, left: Expr, right: Expr, line: usize) -> Expr {
+    fn handle_less_equal(&self, left: Expr, right: Expr, line: usize) -> Result<Expr, LoxError> {
         if let (Expr::Number(l), Expr::Number(r)) = (left, right) {
-            Expr::Boolean(l <= r)
+            Ok(Expr::Boolean(l <= r))
         } else {
-            eprintln!("Operands must be numbers.\n[line {}]", line);
-            std::process::exit(70);
+            Err(LoxError::new("Operands must be numbers.", line))
         }
     }
 
-    fn handle_equal_equal(&self, left: Expr, right: Expr) -> Expr {
-        Expr::Boolean(left == right)
+    fn handle_equal_equal(&self, left: Expr, right: Expr) -> Result<Expr, LoxError> {
+        Ok(Expr::Boolean(left == right))
     }
 
-    fn handle_bang_equal(&self, left: Expr, right: Expr) -> Expr {
-        Expr::Boolean(left != right)
+    fn handle_bang_equal(&self, left: Expr, right: Expr) -> Result<Expr, LoxError> {
+        Ok(Expr::Boolean(left != right))
     }
 
     fn is_truthy(&self, value: &Expr) -> bool {
