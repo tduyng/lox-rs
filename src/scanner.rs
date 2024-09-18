@@ -133,6 +133,11 @@ impl Scanner {
             self.advance();
         }
 
+        if self.is_at_end() {
+            self.report_error(LoxError::new("Unterminated string literal", self.line));
+            return;
+        }
+
         self.advance(); // Skip the closing quote
 
         let value = self.source[self.start + 1..self.current - 1].to_string();
@@ -210,14 +215,14 @@ impl Scanner {
     }
 
     fn peek(&self) -> char {
-        self.source.chars().nth(self.current).unwrap_or('\0')
+        self.source[self.current..].chars().next().unwrap_or('\0')
     }
 
     fn peek_next(&self) -> char {
-        if self.current + 1 >= self.source.len() {
-            '\0' // Return null character if out of bounds
+        if self.is_at_end() {
+            '\0'
         } else {
-            self.source.chars().nth(self.current + 1).unwrap()
+            self.source[self.current..].chars().nth(1).unwrap_or('\0')
         }
     }
 
