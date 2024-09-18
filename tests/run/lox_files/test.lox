@@ -1,3 +1,3 @@
- print "the expression below is invalid";
- 21 + "bar";
- print "this should not be printed";
+var a = 1;
+var a = 2;
+print a;

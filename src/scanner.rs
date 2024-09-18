@@ -47,6 +47,11 @@ impl Scanner {
                 self.current += 4;
                 Ok(())
             }
+            'v' if self.look_ahead(2) == "var" => {
+                self.add_token(TokenType::Var)?;
+                self.current += 2;
+                Ok(())
+            }
             '(' => self.add_token(TokenType::LeftParen),
             ')' => self.add_token(TokenType::RightParen),
             '{' => self.add_token(TokenType::LeftBrace),

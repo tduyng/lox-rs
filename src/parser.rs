@@ -33,6 +33,11 @@ impl Parser {
         if self.match_token(&[TokenType::Print]) {
             return self.print_statement();
         }
+
+        if self.match_token(&[TokenType::Var]) {
+            return self.var_declaration();
+        }
+
         self.expression_statement()
     }
 
@@ -40,6 +45,29 @@ impl Parser {
         let value = self.expression()?;
         self.consume(TokenType::Semicolon)?;
         Ok(Stmt::Print(value))
+    }
+
+    fn var_declaration(&mut self) -> Result<Stmt, LoxError> {
+        let name = if let TokenType::Identifier = self.peek().token_type {
+            self.peek().lexeme.clone()
+        } else {
+            return Err(LoxError::new(
+                "Expected variable name after 'var'",
+                self.peek().line,
+            ));
+        };
+
+        self.advance();
+
+        let initializer = if self.match_token(&[TokenType::Equal]) {
+            Some(self.expression()?)
+        } else {
+            None
+        };
+
+        self.consume(TokenType::Semicolon)?;
+
+        Ok(Stmt::Var(name, initializer.unwrap_or(Expr::Nil)))
     }
 
     fn expression_statement(&mut self) -> Result<Stmt, LoxError> {
@@ -145,6 +173,10 @@ impl Parser {
             TokenType::True => Ok(Expr::Boolean(true)),
             TokenType::False => Ok(Expr::Boolean(false)),
             TokenType::Nil => Ok(Expr::Nil),
+            TokenType::Identifier => Ok(Expr::Variable {
+                operator: token.clone(),
+                name: lexeme,
+            }),
             TokenType::LeftParen => {
                 let expr = self.expression()?;
                 self.consume(TokenType::RightParen)?;

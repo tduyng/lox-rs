@@ -11,6 +11,7 @@ use error::LoxError;
 
 mod ast;
 mod command;
+mod environment;
 mod error;
 mod interpreter;
 mod parser;

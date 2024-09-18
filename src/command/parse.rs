@@ -24,6 +24,9 @@ impl ParseCommand {
             Stmt::Print(expr) => {
                 println!("Print: {}", expr);
             }
+            Stmt::Var(name, expr) => {
+                println!("Var: {} {}", name, expr);
+            }
         }
     }
 }

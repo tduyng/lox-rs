@@ -2,7 +2,7 @@ use std::fmt;
 
 use crate::{token::Token, utils::pad_number};
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Clone, Debug)]
 pub enum Expr {
     String(String),
     Number(f64),
@@ -18,6 +18,10 @@ pub enum Expr {
         right: Box<Expr>,
     },
     Grouping(Box<Expr>),
+    Variable {
+        operator: Token,
+        name: String,
+    },
 }
 
 impl fmt::Display for Expr {
@@ -34,6 +38,7 @@ impl fmt::Display for Expr {
                 right,
             } => write!(fmt, "({} {} {})", operator.lexeme, left, right),
             Expr::Grouping(expr) => write!(fmt, "(group {})", expr),
+            Expr::Variable { operator: _, name } => write!(fmt, "{}", name),
         }
     }
 }
@@ -41,4 +46,5 @@ impl fmt::Display for Expr {
 pub enum Stmt {
     Print(Expr),
     Expression(Expr),
+    Var(String, Expr),
 }

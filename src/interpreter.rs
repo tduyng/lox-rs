@@ -1,14 +1,19 @@
 use crate::{
     ast::{Expr, Stmt},
+    environment::Environment,
     error::LoxError,
     token::TokenType,
 };
 
-pub struct Interpreter;
+pub struct Interpreter {
+    environment: Environment,
+}
 
 impl Interpreter {
     pub fn new() -> Self {
-        Self
+        Self {
+            environment: Environment::new(),
+        }
     }
 
     pub fn interpret(&mut self, statements: Vec<Stmt>) -> Result<(), LoxError> {
@@ -17,6 +22,10 @@ impl Interpreter {
                 Stmt::Print(expr) => {
                     let value = self.evaluate(expr)?;
                     self.print_value(value);
+                }
+                Stmt::Var(name, initializer) => {
+                    let expr = self.evaluate(initializer)?;
+                    self.environment.define(name, expr);
                 }
                 Stmt::Expression(expr) => {
                     self.evaluate(expr)?;
@@ -60,6 +69,13 @@ impl Interpreter {
                 self.handle_binary_op(left_val, &operator.token_type, right_val, line)
             }
             Expr::Grouping(inner_expr) => self.evaluate(*inner_expr),
+            Expr::Variable { operator, name } => {
+                if let Some(value) = self.environment.get(&name) {
+                    Ok(value.clone())
+                } else {
+                    Err(LoxError::new("Undefined variable", operator.line))
+                }
+            }
         }
     }
 
@@ -78,6 +94,7 @@ impl Interpreter {
                 right,
             } => println!("({} {} {})", operator.lexeme, left, right),
             Expr::Grouping(expr) => println!("(group {})", expr),
+            Expr::Variable { operator: _, name } => println!("{}", name),
         }
     }
 
