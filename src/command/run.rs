@@ -23,7 +23,7 @@ impl Command for RunCommand {
         let mut scanner = Scanner::new(self.file_contents.clone());
         let tokens = scanner.scan_tokens();
 
-        let mut parser = Parser::new(tokens.to_vec());
+        let mut parser = Parser::new(tokens.to_vec(), true);
         if scanner.has_error() {
             process::exit(65);
         }
@@ -31,11 +31,16 @@ impl Command for RunCommand {
         match parser.parse() {
             Ok(statements) => {
                 let mut interpreter = Interpreter::new();
-                interpreter.interpret(statements)?;
-                process::exit(0);
+                match interpreter.interpret(statements) {
+                    Ok(_) => process::exit(0),
+                    Err(e) => {
+                        eprintln!("[line {}] Error: {}", e.line, e.message);
+                        process::exit(70);
+                    }
+                }
             }
             Err(e) => {
-                eprintln!("{}", e);
+                eprintln!("[line {}] Error: {}", e.line, e.message);
                 process::exit(65);
             }
         }

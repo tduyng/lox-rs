@@ -7,11 +7,16 @@ use crate::{
 pub struct Parser {
     tokens: Vec<Token>,
     current: usize,
+    require_semicolon: bool,
 }
 
 impl Parser {
-    pub fn new(tokens: Vec<Token>) -> Self {
-        Self { tokens, current: 0 }
+    pub fn new(tokens: Vec<Token>, require_semicolon: bool) -> Self {
+        Self {
+            tokens,
+            current: 0,
+            require_semicolon,
+        }
     }
 
     pub fn parse(&mut self) -> Result<Vec<Stmt>, LoxError> {
@@ -39,7 +44,9 @@ impl Parser {
 
     fn expression_statement(&mut self) -> Result<Stmt, LoxError> {
         let expr = self.expression()?;
-        // self.consume(TokenType::Semicolon)?;
+        if self.require_semicolon {
+            self.consume(TokenType::Semicolon)?;
+        }
         Ok(Stmt::Expression(expr))
     }
 

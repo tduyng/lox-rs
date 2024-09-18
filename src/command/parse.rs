@@ -32,7 +32,7 @@ impl Command for ParseCommand {
     fn execute(&self) -> Result<ExitCode, LoxError> {
         let mut scanner = Scanner::new(self.file_contents.clone());
         let tokens = scanner.scan_tokens();
-        let mut parser = Parser::new(tokens.to_vec());
+        let mut parser = Parser::new(tokens.to_vec(), false);
 
         if scanner.has_error() {
             process::exit(65);
@@ -46,7 +46,7 @@ impl Command for ParseCommand {
                 process::exit(0)
             }
             Err(e) => {
-                eprintln!("{}", e);
+                eprintln!("[line {}] Error: {}", e.line, e.message);
                 process::exit(65)
             }
         }

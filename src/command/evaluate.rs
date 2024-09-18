@@ -24,7 +24,7 @@ impl Command for EvaluateCommand {
     fn execute(&self) -> Result<ExitCode, LoxError> {
         let mut scanner = Scanner::new(self.file_contents.clone());
         let tokens = scanner.scan_tokens();
-        let mut parser = Parser::new(tokens.to_vec());
+        let mut parser = Parser::new(tokens.to_vec(), false);
 
         if scanner.has_error() {
             process::exit(65);
@@ -32,7 +32,7 @@ impl Command for EvaluateCommand {
         let statement = match parser.parse() {
             Ok(stmt) => stmt,
             Err(e) => {
-                eprintln!("{}", e);
+                eprintln!("[line {}] Error: {}", e.line, e.message);
                 process::exit(65);
             }
         };
@@ -42,7 +42,7 @@ impl Command for EvaluateCommand {
                 let expr = match interpreter.evaluate(expr) {
                     Ok(value) => value,
                     Err(e) => {
-                        eprintln!("{}", e);
+                        eprintln!("[line {}] Error: {}", e.line, e.message);
                         process::exit(70);
                     }
                 };

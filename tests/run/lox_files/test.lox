@@ -1,4 +1,3 @@
-(37 + 42 - 21) > (76 - 37) * 2;
-print !false;
-"baz" + "hello" + "quz" + "bar" == "bazhelloquzbar";
-print !false;
+ print "the expression below is invalid";
+ 21 + "bar";
+ print "this should not be printed";
