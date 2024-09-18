@@ -1,3 +1,19 @@
-var a = 1;
-var a = 2;
+var a;
+var b = 2;
+var a = b = 1;
 print a;
+
+var quz;
+quz = 1;
+print quz;
+print quz = 2;
+print quz;
+
+var hello = 65;
+var baz;
+var quz;
+
+hello = baz = quz = hello * 2;
+print hello;
+print baz;
+print baz;

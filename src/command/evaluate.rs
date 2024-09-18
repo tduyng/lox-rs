@@ -32,7 +32,11 @@ impl Command for EvaluateCommand {
         let statement = match parser.parse() {
             Ok(stmt) => stmt,
             Err(e) => {
-                eprintln!("[line {}] Error: {}", e.line, e.message);
+                if let Some(line) = e.line {
+                    eprintln!("[line {}] Error: {}", line, e.message);
+                } else {
+                    eprintln!("Error: {}", e.message);
+                }
                 process::exit(65);
             }
         };
@@ -42,7 +46,11 @@ impl Command for EvaluateCommand {
                 let expr = match interpreter.evaluate(expr) {
                     Ok(value) => value,
                     Err(e) => {
-                        eprintln!("[line {}] Error: {}", e.line, e.message);
+                        if let Some(line) = e.line {
+                            eprintln!("[line {}] Error: {}", line, e.message);
+                        } else {
+                            eprintln!("Error: {}", e.message);
+                        }
                         process::exit(70);
                     }
                 };

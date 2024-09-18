@@ -49,7 +49,11 @@ impl Command for ParseCommand {
                 process::exit(0)
             }
             Err(e) => {
-                eprintln!("[line {}] Error: {}", e.line, e.message);
+                if let Some(line) = e.line {
+                    eprintln!("[line {}] Error: {}", line, e.message);
+                } else {
+                    eprintln!("Error: {}", e.message);
+                }
                 process::exit(65)
             }
         }

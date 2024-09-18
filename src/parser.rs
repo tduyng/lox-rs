@@ -53,7 +53,7 @@ impl Parser {
         } else {
             return Err(LoxError::new(
                 "Expected variable name after 'var'",
-                self.peek().line,
+                Some(self.peek().line),
             ));
         };
 
@@ -79,9 +79,31 @@ impl Parser {
     }
 
     fn expression(&mut self) -> Result<Expr, LoxError> {
-        self.equality()
+        self.assignment()
     }
 
+    fn assignment(&mut self) -> Result<Expr, LoxError> {
+        let expr = self.equality()?;
+
+        if self.match_token(&[TokenType::Equal]) {
+            let equals = self.previous().clone();
+            let value = self.assignment()?;
+
+            if let Expr::Variable(ref name) = expr {
+                return Ok(Expr::Assign {
+                    name: name.clone(),
+                    value: Box::new(value),
+                });
+            } else {
+                return Err(LoxError::new(
+                    "Invalid assignment target",
+                    Some(equals.line),
+                ));
+            }
+        }
+
+        Ok(expr)
+    }
     fn equality(&mut self) -> Result<Expr, LoxError> {
         let mut expr = self.relational()?;
 
@@ -162,7 +184,10 @@ impl Parser {
 
     fn primary(&mut self) -> Result<Expr, LoxError> {
         if self.is_at_end() {
-            return Err(LoxError::new("Unexpected end of input", self.peek().line));
+            return Err(LoxError::new(
+                "Unexpected end of input",
+                Some(self.peek().line),
+            ));
         }
 
         let token = self.advance();
@@ -173,10 +198,7 @@ impl Parser {
             TokenType::True => Ok(Expr::Boolean(true)),
             TokenType::False => Ok(Expr::Boolean(false)),
             TokenType::Nil => Ok(Expr::Nil),
-            TokenType::Identifier => Ok(Expr::Variable {
-                operator: token.clone(),
-                name: lexeme,
-            }),
+            TokenType::Identifier => Ok(Expr::Variable(lexeme)),
             TokenType::LeftParen => {
                 let expr = self.expression()?;
                 self.consume(TokenType::RightParen)?;
@@ -184,7 +206,7 @@ impl Parser {
             }
             _ => Err(LoxError::new(
                 &format!("Unexpected token: '{}'", token.lexeme),
-                token.line,
+                Some(token.line),
             )),
         }
     }
@@ -210,7 +232,7 @@ impl Parser {
             let eof_token = self.peek();
             return Err(LoxError::new(
                 &format!("Expected {:?}, but got Eof", expected),
-                eof_token.line,
+                Some(eof_token.line),
             ));
         } else if self.peek().token_type != expected {
             let current_token = self.peek();
@@ -219,7 +241,7 @@ impl Parser {
                     "Expected {:?}, but got {:?}",
                     expected, current_token.token_type
                 ),
-                current_token.line,
+                Some(current_token.line),
             ));
         }
         self.advance();

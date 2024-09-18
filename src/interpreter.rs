@@ -49,13 +49,13 @@ impl Interpreter {
                         if let Expr::Number(n) = right_val {
                             return Ok(Expr::Number(-n));
                         }
-                        Err(LoxError::new("Operand must be a number", line))
+                        Err(LoxError::new("Operand must be a number", Some(line)))
                     }
                     TokenType::Bang => {
                         let is_truthy = self.is_truthy(&right_val);
                         Ok(Expr::Boolean(!is_truthy))
                     }
-                    _ => Err(LoxError::new("Unknown unary operator", line)),
+                    _ => Err(LoxError::new("Unknown unary operator", Some(line))),
                 }
             }
             Expr::Binary {
@@ -69,11 +69,17 @@ impl Interpreter {
                 self.handle_binary_op(left_val, &operator.token_type, right_val, line)
             }
             Expr::Grouping(inner_expr) => self.evaluate(*inner_expr),
-            Expr::Variable { operator, name } => {
+            Expr::Assign { name, value } => {
+                let evaluated_value = self.evaluate(*value)?;
+                let key = name.clone();
+                self.environment.assign(key, evaluated_value, 0)?;
+                Ok(self.environment.get(&name).unwrap().clone())
+            }
+            Expr::Variable(name) => {
                 if let Some(value) = self.environment.get(&name) {
                     Ok(value.clone())
                 } else {
-                    Err(LoxError::new("Undefined variable", operator.line))
+                    Err(LoxError::new("Undefined variable", None))
                 }
             }
         }
@@ -94,7 +100,8 @@ impl Interpreter {
                 right,
             } => println!("({} {} {})", operator.lexeme, left, right),
             Expr::Grouping(expr) => println!("(group {})", expr),
-            Expr::Variable { operator: _, name } => println!("{}", name),
+            Expr::Variable(name) => println!("{}", name),
+            Expr::Assign { name, value } => println!("{} {}", name, value),
         }
     }
 
@@ -126,7 +133,7 @@ impl Interpreter {
             (Expr::String(l), Expr::String(r)) => Ok(Expr::String(format!("{}{}", l, r))),
             _ => Err(LoxError::new(
                 "Operands must be two numbers or two strings",
-                line,
+                Some(line),
             )),
         }
     }
@@ -135,18 +142,18 @@ impl Interpreter {
         if let (Expr::Number(l), Expr::Number(r)) = (left, right) {
             Ok(Expr::Number(l - r))
         } else {
-            Err(LoxError::new("Operands must be numbers.", line))
+            Err(LoxError::new("Operands must be numbers.", Some(line)))
         }
     }
 
     fn handle_divide(&self, left: Expr, right: Expr, line: usize) -> Result<Expr, LoxError> {
         if let (Expr::Number(l), Expr::Number(r)) = (left, right) {
             if r == 0.0 {
-                return Err(LoxError::new("Division by zero", line));
+                return Err(LoxError::new("Division by zero", Some(line)));
             }
             Ok(Expr::Number(l / r))
         } else {
-            Err(LoxError::new("Operands must be numbers.", line))
+            Err(LoxError::new("Operands must be numbers.", Some(line)))
         }
     }
 
@@ -154,7 +161,7 @@ impl Interpreter {
         if let (Expr::Number(l), Expr::Number(r)) = (left, right) {
             Ok(Expr::Number(l * r))
         } else {
-            Err(LoxError::new("Operands must be numbers.", line))
+            Err(LoxError::new("Operands must be numbers.", Some(line)))
         }
     }
 
@@ -162,7 +169,7 @@ impl Interpreter {
         if let (Expr::Number(l), Expr::Number(r)) = (left, right) {
             Ok(Expr::Boolean(l > r))
         } else {
-            Err(LoxError::new("Operands must be numbers.", line))
+            Err(LoxError::new("Operands must be numbers.", Some(line)))
         }
     }
 
@@ -170,7 +177,7 @@ impl Interpreter {
         if let (Expr::Number(l), Expr::Number(r)) = (left, right) {
             Ok(Expr::Boolean(l >= r))
         } else {
-            Err(LoxError::new("Operands must be numbers.", line))
+            Err(LoxError::new("Operands must be numbers.", Some(line)))
         }
     }
 
@@ -178,7 +185,7 @@ impl Interpreter {
         if let (Expr::Number(l), Expr::Number(r)) = (left, right) {
             Ok(Expr::Boolean(l < r))
         } else {
-            Err(LoxError::new("Operands must be numbers.", line))
+            Err(LoxError::new("Operands must be numbers.", Some(line)))
         }
     }
 
@@ -186,7 +193,7 @@ impl Interpreter {
         if let (Expr::Number(l), Expr::Number(r)) = (left, right) {
             Ok(Expr::Boolean(l <= r))
         } else {
-            Err(LoxError::new("Operands must be numbers.", line))
+            Err(LoxError::new("Operands must be numbers.", Some(line)))
         }
     }
 

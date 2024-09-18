@@ -34,13 +34,21 @@ impl Command for RunCommand {
                 match interpreter.interpret(statements) {
                     Ok(_) => process::exit(0),
                     Err(e) => {
-                        eprintln!("[line {}] Error: {}", e.line, e.message);
+                        if let Some(line) = e.line {
+                            eprintln!("[line {}] Error: {}", line, e.message);
+                        } else {
+                            eprintln!("Error: {}", e.message);
+                        }
                         process::exit(70);
                     }
                 }
             }
             Err(e) => {
-                eprintln!("[line {}] Error: {}", e.line, e.message);
+                if let Some(line) = e.line {
+                    eprintln!("[line {}] Error: {}", line, e.message);
+                } else {
+                    eprintln!("Error: {}", e.message);
+                }
                 process::exit(65);
             }
         }

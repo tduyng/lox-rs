@@ -18,9 +18,10 @@ pub enum Expr {
         right: Box<Expr>,
     },
     Grouping(Box<Expr>),
-    Variable {
-        operator: Token,
+    Variable(String),
+    Assign {
         name: String,
+        value: Box<Expr>,
     },
 }
 
@@ -38,7 +39,8 @@ impl fmt::Display for Expr {
                 right,
             } => write!(fmt, "({} {} {})", operator.lexeme, left, right),
             Expr::Grouping(expr) => write!(fmt, "(group {})", expr),
-            Expr::Variable { operator: _, name } => write!(fmt, "{}", name),
+            Expr::Variable(name) => write!(fmt, "{}", name),
+            Expr::Assign { name, value } => write!(fmt, "{} {}", name, value),
         }
     }
 }

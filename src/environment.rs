@@ -26,7 +26,7 @@ impl Environment {
             self.values.insert(name, value);
             Ok(())
         } else {
-            Err(LoxError::new("Undefined variable", line))
+            Err(LoxError::new("Undefined variable", Some(line)))
         }
     }
 }

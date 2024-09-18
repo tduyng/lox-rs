@@ -110,7 +110,7 @@ impl Scanner {
             c if c.is_ascii_digit() => self.number(),
             _ => Err(LoxError::new(
                 &format!("Unexpected character: {}", c),
-                self.line,
+                Some(self.line),
             )),
         }
     }
@@ -131,7 +131,7 @@ impl Scanner {
         }
 
         if self.is_at_end() {
-            return Err(LoxError::new("Unterminated string.", self.line));
+            return Err(LoxError::new("Unterminated string.", Some(self.line)));
         }
 
         self.advance(); // Skip the closing quote
@@ -242,7 +242,11 @@ impl Scanner {
     }
 
     fn report_error(&self, error: LoxError) {
-        eprintln!("[line {}] Error: {}", error.line, error.message);
+        if let Some(line) = error.line {
+            eprintln!("[line {}] Error: {}", line, error.message);
+        } else {
+            eprintln!("Error: {}", error.message);
+        }
     }
 
     pub fn has_error(&self) -> bool {
