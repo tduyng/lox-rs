@@ -17,21 +17,36 @@ impl Interpreter {
     }
 
     pub fn interpret(&mut self, statements: Vec<Stmt>) -> Result<(), LoxError> {
-        for statement in statements {
-            match statement {
-                Stmt::Print(expr) => {
-                    let value = self.evaluate(expr)?;
-                    self.print_value(value);
-                }
-                Stmt::Var(name, initializer) => {
-                    let expr = self.evaluate(initializer)?;
-                    self.environment.define(name, expr);
-                }
-                Stmt::Expression(expr) => {
-                    self.evaluate(expr)?;
-                }
-            }
+        for stmt in statements {
+            self.execute(stmt)?;
         }
+        Ok(())
+    }
+
+    fn execute(&mut self, stmt: Stmt) -> Result<(), LoxError> {
+        match stmt {
+            Stmt::Print(expr) => {
+                let value = self.evaluate(expr)?;
+                self.print_value(value);
+            }
+            Stmt::Var(name, initializer) => {
+                let value = self.evaluate(initializer)?;
+                self.environment.define(name, value);
+            }
+            Stmt::Expression(expr) => {
+                self.evaluate(expr)?;
+            }
+            Stmt::Block(statements) => self.execute_block(statements)?,
+        }
+        Ok(())
+    }
+
+    fn execute_block(&mut self, statements: Vec<Stmt>) -> Result<(), LoxError> {
+        let previous_environment = std::mem::replace(&mut self.environment, Environment::new());
+        for stmt in statements {
+            self.execute(stmt)?;
+        }
+        self.environment = previous_environment;
         Ok(())
     }
 

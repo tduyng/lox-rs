@@ -49,4 +49,5 @@ pub enum Stmt {
     Print(Expr),
     Expression(Expr),
     Var(String, Expr),
+    Block(Vec<Stmt>),
 }

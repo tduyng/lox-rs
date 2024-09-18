@@ -38,7 +38,23 @@ impl Parser {
             return self.var_declaration();
         }
 
+        if self.match_token(&[TokenType::LeftBrace]) {
+            return Ok(Stmt::Block(self.block()?));
+        }
+
         self.expression_statement()
+    }
+
+    fn block(&mut self) -> Result<Vec<Stmt>, LoxError> {
+        let mut statements = Vec::new();
+
+        while !self.check(&TokenType::RightBrace) && !self.is_at_end() {
+            statements.push(self.statement()?);
+        }
+
+        self.consume(TokenType::RightBrace)?;
+
+        Ok(statements)
     }
 
     fn print_statement(&mut self) -> Result<Stmt, LoxError> {
