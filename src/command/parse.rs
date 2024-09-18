@@ -31,7 +31,9 @@ impl Command for ParseCommand {
 
         match parser.parse() {
             Ok(statement) => {
-                self.handle_statement(statement);
+                for stmt in statement {
+                    self.handle_statement(stmt);
+                }
                 process::exit(0)
             }
             Err(e) => {

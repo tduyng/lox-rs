@@ -10,14 +10,16 @@ impl Interpreter {
         Self
     }
 
-    pub fn interpret(&mut self, stmt: Stmt) {
-        match stmt {
-            Stmt::Print(expr) => {
-                let value = self.evaluate(expr);
-                self.print_value(value);
-            }
-            Stmt::Expression(expr) => {
-                self.evaluate(expr);
+    pub fn interpret(&mut self, statements: Vec<Stmt>) {
+        for statement in statements {
+            match statement {
+                Stmt::Print(expr) => {
+                    let value = self.evaluate(expr);
+                    self.print_value(value);
+                }
+                Stmt::Expression(expr) => {
+                    self.evaluate(expr);
+                }
             }
         }
     }

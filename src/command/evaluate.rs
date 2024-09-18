@@ -29,12 +29,14 @@ impl Command for EvaluateCommand {
             }
         };
         let mut interpreter = Interpreter::new();
-        match statement {
-            Stmt::Expression(expr) => {
-                let expr = interpreter.evaluate(expr);
-                interpreter.print_value(expr);
+        for statement in statement {
+            match statement {
+                Stmt::Expression(expr) => {
+                    let expr = interpreter.evaluate(expr);
+                    interpreter.print_value(expr);
+                }
+                _ => {}
             }
-            _ => {}
         }
 
         process::exit(0)

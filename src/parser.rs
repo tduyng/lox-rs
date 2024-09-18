@@ -14,8 +14,14 @@ impl Parser {
         Self { tokens, current: 0 }
     }
 
-    pub fn parse(&mut self) -> Result<Stmt, LoxError> {
-        self.statement()
+    pub fn parse(&mut self) -> Result<Vec<Stmt>, LoxError> {
+        let mut statements = Vec::new();
+
+        while !self.is_at_end() {
+            statements.push(self.statement()?);
+        }
+
+        Ok(statements)
     }
 
     fn statement(&mut self) -> Result<Stmt, LoxError> {
@@ -152,7 +158,8 @@ impl Parser {
     }
 
     fn is_at_end(&self) -> bool {
-        self.current >= self.tokens.len()
+        // self.current >= self.tokens.len()
+        self.peek().token_type == TokenType::Eof
     }
 
     fn peek(&self) -> &Token {
